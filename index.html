@@ -6,71 +6,30 @@
     <title>Dashboard - Congresso UMADSA</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js (para gráficos) -->
+    <!-- Chart.js (Gráficos) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF (Exportar PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF-AutoTable (Tabelas no PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf-autotable.umd.min.js"></script>
+    
     <style>
         /* Fontes Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        /* Classe para estado de carregamento */
-        .loading-state {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            font-size: 1.2rem;
-            color: #6b7280;
-        }
-        /* Cards do Dashboard */
-        .kpi-card {
-            background-color: white;
-            border-radius: 0.75rem; /* 12px */
-            padding: 1.5rem; /* 24px */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
-        }
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .kpi-title {
-            font-size: 0.875rem; /* 14px */
-            font-weight: 500;
-            color: #4b5563; /* text-gray-600 */
-            text-transform: uppercase;
-        }
-        .kpi-value {
-            font-size: 2.25rem; /* 36px */
-            font-weight: 700;
-            color: #111827; /* text-gray-900 */
-        }
-        .kpi-delta {
-            font-size: 1rem; /* 16px */
-            font-weight: 600;
-        }
-        /* Botões de Filtro */
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            border: 1px solid #d1d5db; /* border-gray-300 */
-        }
-        .filter-btn.active {
-            background-color: #1f2937; /* bg-gray-800 */
-            color: white;
-            border-color: #1f2937;
-        }
-        .filter-btn:not(.active) {
-            background-color: white;
-            color: #374151; /* text-gray-700 */
-        }
-        .filter-btn:not(.active):hover {
-            background-color: #f9fafb; /* bg-gray-50 */
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .kpi-card { background-color: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .kpi-title { font-size: 0.875rem; font-weight: 500; color: #4b5563; text-transform: uppercase; }
+        .kpi-value { font-size: 2.25rem; font-weight: 700; color: #111827; }
+        .kpi-delta { font-size: 1rem; font-weight: 600; }
+        
+        /* Botões de Navegação (Tabs) */
+        .tab-btn { padding: 0.75rem 1.5rem; font-weight: 600; color: #374151; border-bottom: 4px solid transparent; }
+        .tab-btn.active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+        
+        /* Modal (Popup) */
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); z-index: 40; }
+        .modal-content { background-color: white; z-index: 50; max-height: 80vh; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -78,121 +37,146 @@
     <!-- Container Principal -->
     <div class="max-w-7xl mx-auto">
         
-        <!-- Cabeçalho -->
-        <header class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard Congresso UMADSA</h1>
-            <p class="text-lg text-gray-600">Prestação de Contas e Status de Camisetas</p>
-            <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
+        <!-- Cabeçalho com Logo (Req. 1) -->
+        <header class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Dashboard Congresso UMADSA</h1>
+                <p class="text-lg text-gray-600">Prestação de Contas e Status</p>
+                <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
+            </div>
+            <div>
+                <img src="https://i.imgur.com/v8FkLKC.png" alt="Logo UMADSA" class="h-16">
+            </div>
         </header>
 
-        <!-- Seção de Alerta: Cole a URL -->
+        <!-- Navegação dos Dashboards (Req. 5) -->
+        <nav class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="flex border-b border-gray-200">
+                <button id="btn-tab-principal" class="tab-btn active" onclick="mudarTab('principal')">Dashboard Principal</button>
+                <button id="btn-tab-comparativo" class="tab-btn" onclick="mudarTab('comparativo')">Dashboard Resumido (Comp. 2022)</button>
+            </div>
+        </nav>
+
+        <!-- Alerta de URL (Não mexer) -->
         <div id="url-alert" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
             <p class="font-bold">Ação Necessária</p>
-            <p>Este dashboard ainda não está conectado. Você precisa colar a URL do seu Google Apps Script no código HTML (na variável `APPS_SCRIPT_URL`) para que ele funcione.</p>
+            <p>Cole a URL do seu Google Apps Script na variável `APPS_SCRIPT_URL` no código HTML.</p>
         </div>
 
-        <!-- Seção de Carregamento/Erro -->
-        <div id="loading" class="loading-state">Carregando dados da planilha...</div>
-        <div id="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 hidden" role="alert">
-            <p class="font-bold">Erro ao Carregar Dados</p>
-            <p id="error-message"></p>
-        </div>
+        <!-- Carregamento / Erro -->
+        <div id="loading" class="text-center p-12 text-gray-600 text-xl font-medium">Carregando dados da planilha...</div>
+        <div id="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 hidden">...</div>
 
-        <!-- Conteúdo do Dashboard (escondido até carregar) -->
-        <main id="dashboard-content" class="hidden">
-            
+        <!-- ============================== -->
+        <!-- == DASHBOARD PRINCIPAL (TAB) == -->
+        <!-- ============================== -->
+        <main id="tab-principal" class="">
             <!-- SEÇÃO FINANCEIRA -->
             <section id="financeiro">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Visão Financeira</h2>
-                
-                <!-- KPIs Financeiros -->
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Visão Financeira (Atual)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <!-- Total Recebido -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Total Recebido (Pago)</div>
-                        <div id="kpi-recebido" class="kpi-value text-green-600">R$ 0,00</div>
-                        <div id="kpi-recebido-previsto" class="kpi-delta text-gray-500">de R$ 0,00 previsto</div>
-                    </div>
-                    <!-- Total de Gastos (Pago) -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Total de Gastos (Pago)</div>
-                        <div id="kpi-gasto-pago" class="kpi-value text-red-600">R$ 0,00</div>
-                        <div id="kpi-gasto-previsto" class="kpi-delta text-gray-500">de R$ 0,00 previsto</div>
-                    </div>
-                    <!-- Saldo Atual (Pago) -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Saldo Atual (Recebido vs Pago)</div>
-                        <div id="kpi-saldo-atual" class="kpi-value">R$ 0,00</div>
-                        <div class="kpi-delta text-gray-500">Balanço do que já foi pago</div>
-                    </div>
-                    <!-- A Pagar (Gastos) -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Total a Pagar (Gastos)</div>
-                        <div id="kpi-a-pagar" class="kpi-value text-yellow-600">R$ 0,00</div>
-                        <div class="kpi-delta text-gray-500">Valor pendente de saídas</div>
-                    </div>
+                    <div class="kpi-card"><div class="kpi-title">Total Recebido (Pago)</div><div id="kpi-recebido" class="kpi-value text-green-600"></div><div id="kpi-recebido-previsto" class="kpi-delta text-gray-500"></div></div>
+                    <div class="kpi-card"><div class="kpi-title">Total de Gastos (Pago)</div><div id="kpi-gasto-pago" class="kpi-value text-red-600"></div><div id="kpi-gasto-previsto" class="kpi-delta text-gray-500"></div></div>
+                    <div class="kpi-card"><div class="kpi-title">Saldo Atual (Recebido vs Pago)</div><div id="kpi-saldo-atual" class="kpi-value"></div><div class="kpi-delta text-gray-500">Balanço do que já foi pago</div></div>
+                    <div class="kpi-card"><div class="kpi-title">Total a Pagar (Gastos)</div><div id="kpi-a-pagar" class="kpi-value text-yellow-600"></div><div class="kpi-delta text-gray-500">Valor pendente de saídas</div></div>
                 </div>
-
-                <!-- Gráficos Financeiros -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div class="kpi-card">
-                        <h3 class="text-lg font-semibold mb-4">Composição dos Gastos (Pagos)</h3>
-                        <div class="w-full h-80 flex justify-center items-center">
-                            <canvas id="gastosChart"></canvas>
-                        </div>
+                        <h3 class="text-lg font-semibold mb-4">Composição das Entradas (Pagos)</h3>
+                        <p class="text-sm text-gray-500 -mt-3 mb-3">Clique nas fatias para ver detalhes.</p>
+                        <div class="w-full h-80 flex justify-center items-center"><canvas id="entradasChart"></canvas></div>
                     </div>
                     <div class="kpi-card">
-                        <h3 class="text-lg font-semibold mb-4">Entradas vs Saídas</h3>
-                        <div class="w-full h-80 flex justify-center items-center">
-                            <canvas id="balancoChart"></canvas>
-                        </div>
+                        <h3 class="text-lg font-semibold mb-4">Composição dos Gastos (Pagos)</h3>
+                        <div class="w-full h-80 flex justify-center items-center"><canvas id="gastosChart"></canvas></div>
                     </div>
                 </div>
             </section>
-
             <!-- SEÇÃO CAMISETAS -->
             <section id="camisetas" class="mt-8">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Status das Camisetas</h2>
-                
-                <!-- KPIs Camisetas -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold text-gray-800">Status das Camisetas</h2>
+                    <!-- Botão de Exportar PDF (Req. 2) -->
+                    <button id="export-pdf-btn" class="bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+                        Exportar Relatório PDF
+                    </button>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <!-- Total de Pedidos Pagos -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Total de Pedidos (Pagos)</div>
-                        <div id="kpi-total-pedidos" class="kpi-value text-blue-600">0</div>
-                    </div>
-                    <!-- Meta Total -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">Meta Total (Homens)</div>
-                        <div id="kpi-meta-total" class="kpi-value text-gray-800">0</div>
-                    </div>
-                    <!-- % Adesão Total -->
-                    <div class="kpi-card">
-                        <div class="kpi-title">% Adesão (Total)</div>
-                        <div id="kpi-adesao-total" class="kpi-value text-blue-600">0%</div>
-                    </div>
+                    <div class="kpi-card"><div class="kpi-title">Total de Pedidos (Pagos)</div><div id="kpi-total-pedidos" class="kpi-value text-blue-600"></div></div>
+                    <div class="kpi-card"><div class="kpi-title">Meta Total (Homens)</div><div id="kpi-meta-total" class="kpi-value text-gray-800"></div></div>
+                    <div class="kpi-card"><div class="kpi-title">% Adesão (Total)</div><div id="kpi-adesao-total" class="kpi-value text-blue-600"></div></div>
                 </div>
-
-                <!-- Filtros de Regional -->
-                <div class="mb-4">
-                    <label class="text-sm font-medium text-gray-700 mr-2">Filtrar por Regional:</label>
-                    <div id="filtros-regionais" class="flex flex-wrap gap-2">
-                        <!-- Botões serão inseridos aqui pelo JS -->
-                    </div>
-                </div>
-                
-                <!-- Gráfico Camisetas -->
+                <div class="mb-4"><label class="text-sm font-medium text-gray-700 mr-2">Filtrar por Regional:</label><div id="filtros-regionais" class="flex flex-wrap gap-2"></div></div>
                 <div class="kpi-card">
                     <h3 class="text-lg font-semibold mb-4">Adesão por Campo</h3>
-                    <div class="w-full h-96">
-                        <canvas id="camisetasChart"></canvas>
-                    </div>
+                    <div class="w-full h-96"><canvas id="camisetasChart"></canvas></div>
                 </div>
             </section>
-
+        </main>
+        
+        <!-- ================================ -->
+        <!-- == DASHBOARD RESUMIDO (TAB) == -->
+        <!-- ================================ -->
+        <main id="tab-comparativo" class="hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resumo (Atual vs 2022)</h2>
+            <!-- KPIs Resumidos (Req. 6) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Entradas -->
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Entradas (Ajudas + Camisetas)</div>
+                    <div id="resumo-entradas-atual" class="kpi-value text-green-600"></div>
+                    <div class="kpi-delta text-green-700">2022: <span id="resumo-entradas-2022"></span></div>
+                </div>
+                <!-- Despesas -->
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Despesas (Previsto)</div>
+                    <div id="resumo-despesas-atual" class="kpi-value text-red-600"></div>
+                    <div class="kpi-delta text-red-700">2022: <span id="resumo-despesas-2022"></span></div>
+                </div>
+                <!-- A Pagar -->
+                <div class="kpi-card">
+                    <div class="kpi-title">Despesa Pendente (A Pagar)</div>
+                    <div id="resumo-apagar-atual" class="kpi-value text-yellow-600"></div>
+                    <div class="kpi-delta text-gray-500">Despesa Prevista - Despesa Paga</div>
+                </div>
+            </div>
+            <!-- Gráficos Comparativos -->
+            <div class="kpi-card">
+                <h3 class="text-lg font-semibold mb-4">Comparativo Entradas vs Despesas (2022 vs Atual)</h3>
+                <div class="w-full h-96"><canvas id="comparativoChart"></canvas></div>
+            </div>
         </main>
     </div>
 
+    <!-- ======================== -->
+    <!-- == MODAL (Popup) == -->
+    <!-- ======================== -->
+    <div id="modal-financeiro" class="fixed inset-0 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="modal-content w-full max-w-4xl rounded-lg shadow-2xl overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800">Detalhes</h2>
+                <button onclick="fecharModal()" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <!-- Tabela de Conteúdo do Modal -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr id="modal-table-head">
+                            <!-- Cabeçalhos da tabela inseridos via JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="modal-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Linhas da tabela inseridas via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================== -->
+    <!-- == SCRIPT PRINCIPAL == -->
+    <!-- ======================== -->
     <script>
         // =================================================================
         // PASSO FINAL: COLE A URL DO SEU APPS SCRIPT AQUI
@@ -201,170 +185,288 @@
         // Ex: 'https://script.google.com/macros/s/SUA_ID_UNICA/exec'
         // =================================================================
 
-        // Referências de Gráficos (globais para serem destruídos e recriados)
+        // Referências de Gráficos (globais)
+        let entradasChartInstance = null;
         let gastosChartInstance = null;
-        let balancoChartInstance = null;
         let camisetasChartInstance = null;
+        let comparativoChartInstance = null;
 
         // Armazenamento de dados globais
         let allData = {};
         let activeRegionalFilter = 'TODAS';
 
-        // Função Principal para buscar e renderizar
-        async function carregarDashboard() {
-            const loadingEl = document.getElementById('loading');
-            const errorEl = document.getElementById('error');
-            const errorMsgEl = document.getElementById('error-message');
-            const contentEl = document.getElementById('dashboard-content');
-            const urlAlertEl = document.getElementById('url-alert');
+        // Função para formatar Moeda BRL
+        function formatarBRL(valor) {
+            return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
 
-            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_2_AQUI') {
-                urlAlertEl.classList.remove('hidden');
-                loadingEl.classList.add('hidden');
+        // --- 1. CONTROLE DE NAVEGAÇÃO (TABS) ---
+        function mudarTab(tabAtiva) {
+            document.getElementById('tab-principal').classList.toggle('hidden', tabAtiva !== 'principal');
+            document.getElementById('tab-comparativo').classList.toggle('hidden', tabAtiva !== 'comparativo');
+            
+            document.getElementById('btn-tab-principal').classList.toggle('active', tabAtiva === 'principal');
+            document.getElementById('btn-tab-comparativo').classList.toggle('active', tabAtiva === 'comparativo');
+        }
+
+        // --- 2. LÓGICA DO MODAL (Req. 3) ---
+        const modal = document.getElementById('modal-financeiro');
+
+        function fecharModal() {
+            modal.classList.add('hidden');
+        }
+
+        function abrirModal(titulo, cabecalhos, linhas) {
+            document.getElementById('modal-title').textContent = titulo;
+            const thead = document.getElementById('modal-table-head');
+            const tbody = document.getElementById('modal-table-body');
+            
+            // Limpa modal
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            // Popula cabeçalho
+            let ths = '';
+            cabecalhos.forEach(c => {
+                ths += `<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${c}</th>`;
+            });
+            thead.innerHTML = `<tr>${ths}</tr>`;
+
+            // Popula corpo
+            let trs = '';
+            linhas.forEach(linha => {
+                let tds = '';
+                linha.forEach(d => {
+                    tds += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${d}</td>`;
+                });
+                trs += `<tr>${tds}</tr>`;
+            });
+            tbody.innerHTML = trs;
+
+            modal.classList.remove('hidden');
+        }
+
+        // --- 3. LÓGICA DE EXPORTAÇÃO PDF (Req. 2) ---
+        function exportarPDFCamisetas() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("Erro: Biblioteca jsPDF não carregada.");
                 return;
             }
-            urlAlertEl.classList.add('hidden');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const filtro = activeRegionalFilter;
+            const dadosFiltrados = (filtro === 'TODAS')
+                ? allData.campos
+                : allData.campos.filter(d => d.regional === filtro);
+
+            const totalPedidos = dadosFiltrados.reduce((acc, d) => acc + d.pagos, 0);
+            const totalMeta = dadosFiltrados.reduce((acc, d) => acc + d.meta, 0);
+
+            doc.setFontSize(18);
+            doc.text(`Relatório de Camisetas - Regional: ${filtro}`, 14, 22);
+            doc.setFontSize(11);
+            doc.text(`Total de Pedidos: ${totalPedidos} | Meta: ${totalMeta}`, 14, 30);
             
-            try {
-                loadingEl.classList.remove('hidden');
-                errorEl.classList.add('hidden');
-                contentEl.classList.add('hidden');
+            const head = [['Regional', 'Campo', 'Qtd Cong.', 'Meta Homens', 'Pedidos Pagos', 'Detalhes']];
+            const body = dadosFiltrados.map(d => [
+                d.regional,
+                d.campo,
+                d.qtdCongregacoes,
+                d.meta,
+                d.pagos,
+                d.detalhes
+            ]);
 
-                const response = await fetch(APPS_SCRIPT_URL);
-                if (!response.ok) {
-                    throw new Error(`A requisição falhou com status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.status === 'error') {
-                    throw new Error(`Erro no Apps Script: ${data.message}`);
-                }
-                
-                allData = data; // Salva os dados globalmente
-                
-                // Renderiza tudo
-                renderizarKpisFinanceiros(data.financeiro);
-                renderizarGraficosFinanceiros(data.financeiro);
-                renderizarKpisCamisetas(data.camisetas);
-                renderizarFiltrosCamisetas(data.camisetas);
-                renderizarGraficoCamisetas(data.camisetas); // Renderiza o gráfico inicial (TODAS)
+            doc.autoTable({
+                startY: 35,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [22, 160, 133] }
+            });
 
-                // Exibe o conteúdo
-                contentEl.classList.remove('hidden');
-                document.getElementById('last-updated').textContent = new Date().toLocaleString('pt-BR');
-
-            } catch (err) {
-                console.error(err);
-                errorMsgEl.textContent = err.message;
-                errorEl.classList.remove('hidden');
-            } finally {
-                loadingEl.classList.add('hidden');
-            }
+            doc.save(`relatorio_camisetas_${filtro}.pdf`);
         }
 
-        // --- Funções de Renderização Financeira ---
+        // --- 4. FUNÇÕES DE RENDERIZAÇÃO ---
 
-        function formatarBRL(valor) {
-            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-
-        function renderizarKpisFinanceiros(dados) {
-            const entradas = dados.filter(d => d.tipo.toLowerCase() === 'entrada');
-            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saída');
-
+        // (Funções do Dashboard Principal)
+        function renderizarPrincipal(financeiro, campos) {
+            // KPIs Financeiros
+            const entradas = financeiro.filter(d => d.tipo.toLowerCase() === 'entrada');
+            const saidas = financeiro.filter(d => d.tipo.toLowerCase() === 'saída');
             const totalRecebidoPago = entradas.reduce((acc, d) => acc + d.pago, 0);
             const totalRecebidoPrevisto = entradas.reduce((acc, d) => acc + d.previsto, 0);
-            
             const totalGastoPago = saidas.reduce((acc, d) => acc + d.pago, 0);
             const totalGastoPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
-
             const saldoAtual = totalRecebidoPago - totalGastoPago;
             const totalAPagar = totalGastoPrevisto - totalGastoPago;
 
             document.getElementById('kpi-recebido').textContent = formatarBRL(totalRecebidoPago);
             document.getElementById('kpi-recebido-previsto').textContent = `de ${formatarBRL(totalRecebidoPrevisto)} previsto`;
-            
             document.getElementById('kpi-gasto-pago').textContent = formatarBRL(totalGastoPago);
             document.getElementById('kpi-gasto-previsto').textContent = `de ${formatarBRL(totalGastoPrevisto)} previsto`;
-
             document.getElementById('kpi-saldo-atual').textContent = formatarBRL(saldoAtual);
             document.getElementById('kpi-saldo-atual').className = `kpi-value ${saldoAtual >= 0 ? 'text-green-600' : 'text-red-600'}`;
-
             document.getElementById('kpi-a-pagar').textContent = formatarBRL(totalAPagar);
-        }
-
-        function renderizarGraficosFinanceiros(dados) {
-            // 1. Gráfico de Gastos por Categoria (Pizza)
-            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saída');
-            const gastosPorCategoria = saidas.reduce((acc, d) => {
-                const categoria = d.categoria || 'Outros';
-                acc[categoria] = (acc[categoria] || 0) + d.pago;
+            
+            // Gráfico Entradas (Req. 3 - Clicável)
+            const entradasPorCategoria = entradas.reduce((acc, d) => {
+                const cat = d.categoria || 'Outros';
+                acc[cat] = (acc[cat] || 0) + d.pago;
                 return acc;
             }, {});
+            const ctxEntradas = document.getElementById('entradasChart').getContext('2d');
+            if (entradasChartInstance) entradasChartInstance.destroy();
+            entradasChartInstance = new Chart(ctxEntradas, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(entradasPorCategoria),
+                    datasets: [{ data: Object.values(entradasPorCategoria), backgroundColor: ['#22c55e', '#14b8a6', '#06b6d4'] }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    onClick: (evt, elements) => {
+                        if (elements.length === 0) return; // Não clicou na fatia
+                        const index = elements[0].index;
+                        const label = entradasChartInstance.data.labels[index];
+                        handleGraficoEntradasClick(label);
+                    }
+                }
+            });
 
+            // Gráfico Gastos
+            const gastosPorCategoria = saidas.reduce((acc, d) => {
+                const cat = d.categoria || 'Outros';
+                acc[cat] = (acc[cat] || 0) + d.pago;
+                return acc;
+            }, {});
             const ctxGastos = document.getElementById('gastosChart').getContext('2d');
             if (gastosChartInstance) gastosChartInstance.destroy();
             gastosChartInstance = new Chart(ctxGastos, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(gastosPorCategoria),
-                    datasets: [{
-                        data: Object.values(gastosPorCategoria),
-                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6'],
-                    }]
+                    datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#ef4444', '#f97316', '#eab308'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
-            // 2. Gráfico de Balanço (Barras)
-            const totalRecebidoPago = dados.filter(d => d.tipo.toLowerCase() === 'entrada').reduce((acc, d) => acc + d.pago, 0);
-            const totalGastoPago = saidas.reduce((acc, d) => acc + d.pago, 0);
-            const totalRecebidoPrevisto = dados.filter(d => d.tipo.toLowerCase() === 'entrada').reduce((acc, d) => acc + d.previsto, 0);
-            const totalGastoPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
+            // KPIs Camisetas
+            const totalPedidos = campos.reduce((acc, d) => acc + d.pagos, 0);
+            const totalMeta = campos.reduce((acc, d) => acc + d.meta, 0);
+            const adesao = totalMeta > 0 ? (totalPedidos / totalMeta) * 100 : 0;
+            document.getElementById('kpi-total-pedidos').textContent = totalPedidos;
+            document.getElementById('kpi-meta-total').textContent = totalMeta;
+            document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
 
-            const ctxBalanco = document.getElementById('balancoChart').getContext('2d');
-            if (balancoChartInstance) balancoChartInstance.destroy();
-            balancoChartInstance = new Chart(ctxBalanco, {
+            // Filtros Camisetas
+            renderizarFiltrosCamisetas(campos);
+            renderizarGraficoCamisetas(campos); // Renderiza o gráfico inicial (TODAS)
+            document.getElementById('export-pdf-btn').addEventListener('click', exportarPDFCamisetas);
+        }
+
+        // (Funções do Dashboard Resumido / Comparativo)
+        function renderizarResumido(financeiro, historico) {
+            // Calcular métricas Atuais (2025)
+            const totalEntradaAjudasAtual = financeiro.filter(d => d.categoria === 'Ajuda Regional').reduce((acc, d) => acc + d.pago, 0);
+            const totalEntradaCamisetasAtual = financeiro.filter(d => d.categoria === 'Venda Camiseta').reduce((acc, d) => acc + d.pago, 0);
+            const totalEntradasAtual = totalEntradaAjudasAtual + totalEntradaCamisetasAtual;
+            
+            const saidas = financeiro.filter(d => d.tipo.toLowerCase() === 'saída');
+            const totalDespesaPrevistaAtual = saidas.reduce((acc, d) => acc + d.previsto, 0);
+            const totalDespesaPagaAtual = saidas.reduce((acc, d) => acc + d.pago, 0);
+            const totalAPagarAtual = totalDespesaPrevistaAtual - totalDespesaPagaAtual;
+
+            // Buscar métricas de 2022
+            const findHist = (metrica) => historico.find(d => d.ano === 2022 && d.metrica === metrica)?.valor || 0;
+            const totalEntradaAjudas2022 = findHist('Total Entrada Ajudas');
+            const totalEntradaCamisetas2022 = findHist('Total Entrada Camisetas');
+            const totalEntradas2022 = totalEntradaAjudas2022 + totalEntradaCamisetas2022;
+            const totalDespesa2022 = findHist('Total Despesa');
+
+            // Preencher KPIs (Req. 6)
+            document.getElementById('resumo-entradas-atual').textContent = formatarBRL(totalEntradasAtual);
+            document.getElementById('resumo-entradas-2022').textContent = formatarBRL(totalEntradas2022);
+            document.getElementById('resumo-despesas-atual').textContent = formatarBRL(totalDespesaPrevistaAtual);
+            document.getElementById('resumo-despesas-2022').textContent = formatarBRL(totalDespesa2022);
+            document.getElementById('resumo-apagar-atual').textContent = formatarBRL(totalAPagarAtual);
+
+            // Gráfico Comparativo (Req. 5)
+            const ctxComp = document.getElementById('comparativoChart').getContext('2d');
+            if (comparativoChartInstance) comparativoChartInstance.destroy();
+            comparativoChartInstance = new Chart(ctxComp, {
                 type: 'bar',
                 data: {
-                    labels: ['Entradas', 'Saídas'],
+                    labels: ['Total Entradas', 'Total Despesas'],
                     datasets: [
                         {
-                            label: 'Valor Pago/Recebido',
-                            data: [totalRecebidoPago, totalGastoPago],
-                            backgroundColor: ['#22c55e', '#ef4444'],
+                            label: '2022 (Realizado)',
+                            data: [totalEntradas2022, totalDespesa2022],
+                            backgroundColor: '#9ca3af', // cinza
                         },
                         {
-                            label: 'Valor Previsto',
-                            data: [totalRecebidoPrevisto, totalGastoPrevisto],
-                            backgroundColor: ['#bbf7d0', '#fecaca'],
+                            label: 'Atual (Previsto)',
+                            data: [totalEntradasAtual, totalDespesaPrevistaAtual],
+                            backgroundColor: '#3b82f6', // azul
                         }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
         }
-
-        // --- Funções de Renderização Camisetas ---
-
-        function renderizarKpisCamisetas(dados) {
-            const totalPedidos = dados.reduce((acc, d) => acc + d.pagos, 0);
-            const totalMeta = dados.reduce((acc, d) => acc + d.meta, 0);
-            const adesao = totalMeta > 0 ? (totalPedidos / totalMeta) * 100 : 0;
-
-            document.getElementById('kpi-total-pedidos').textContent = totalPedidos;
-            document.getElementById('kpi-meta-total').textContent = totalMeta;
-            document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
-        }
         
-        function renderizarFiltrosCamisetas(dados) {
-            const container = document.getElementById('filtros-regionais');
-            container.innerHTML = ''; // Limpa filtros existentes
+        // --- 5. FUNÇÕES DE CALLBACK ( cliques / filtros ) ---
 
-            const regionais = [...new Set(dados.map(d => d.regional))];
+        // (Callback para clique no gráfico de Entradas - Req. 3)
+        function handleGraficoEntradasClick(categoriaClicada) {
+            // Este é o 'pulo do gato' que você pediu: cruzar dados financeiros com dados de campos.
+            if (categoriaClicada === 'Ajuda Regional') {
+                const dadosFinanceiros = allData.financeiro.filter(d => d.categoria === 'Ajuda Regional');
+                const dadosCampos = allData.campos;
+
+                // Mapeia os dados financeiros para os dados de campos
+                const linhas = dadosCampos.map(campo => {
+                    const fin = dadosFinanceiros.find(f => f.descricao.includes(campo.regional) || f.descricao.includes(campo.campo));
+                    return [
+                        campo.regional,
+                        campo.campo,
+                        campo.qtdCongregacoes,
+                        formatarBRL(fin?.previsto || 0),
+                        formatarBRL(fin?.pago || 0),
+                        fin?.descricao || 'N/A'
+                    ];
+                });
+                abrirModal(
+                    'Detalhes: Ajudas Regionais',
+                    ['Regional', 'Campo', 'Qtd Cong.', 'Valor Previsto', 'Valor Pago', 'Ref. Lançamento'],
+                    linhas
+                );
+            } else {
+                // Para outras categorias (ex: Venda Camiseta), mostramos os lançamentos simples
+                const dadosFiltrados = allData.financeiro.filter(d => d.categoria === categoriaClicada);
+                const linhas = dadosFiltrados.map(d => [
+                    d.data ? new Date(d.data).toLocaleDateString('pt-BR') : 'N/A',
+                    d.descricao,
+                    formatarBRL(d.previsto),
+                    formatarBRL(d.pago)
+                ]);
+                abrirModal(
+                    `Detalhes: ${categoriaClicada}`,
+                    ['Data', 'Descrição', 'Valor Previsto', 'Valor Pago'],
+                    linhas
+                );
+            }
+        }
+
+        // (Funções de filtro de Camisetas - sem alteração)
+        function renderizarFiltrosCamisetas(campos) {
+            const container = document.getElementById('filtros-regionais');
+            container.innerHTML = ''; 
+            const regionais = [...new Set(campos.map(d => d.regional))];
             
-            // Botão "TODAS"
             const btnTodas = document.createElement('button');
             btnTodas.className = 'filter-btn active';
             btnTodas.textContent = 'TODAS';
@@ -372,7 +474,6 @@
             btnTodas.onclick = () => handleFiltroRegional('TODAS');
             container.appendChild(btnTodas);
 
-            // Botões por regional
             regionais.forEach(regional => {
                 if (!regional) return;
                 const btn = document.createElement('button');
@@ -386,59 +487,76 @@
         
         function handleFiltroRegional(regional) {
             activeRegionalFilter = regional;
-            
-            // Atualiza classe 'active' nos botões
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.regional === regional);
             });
-            
-            // Filtra os dados e re-renderiza o gráfico
             const dadosFiltrados = (regional === 'TODAS')
-                ? allData.camisetas
-                : allData.camisetas.filter(d => d.regional === regional);
-                
+                ? allData.campos
+                : allData.campos.filter(d => d.regional === regional);
             renderizarGraficoCamisetas(dadosFiltrados);
         }
 
         function renderizarGraficoCamisetas(dados) {
-            const ctxCamisetas = document.getElementById('camisetasChart').getContext('2d');
-            
-            const labels = dados.map(d => d.campo || 'Não especificado');
-            const dataPagos = dados.map(d => d.pagos);
-            const dataMeta = dados.map(d => d.meta);
-
+            const ctx = document.getElementById('camisetasChart').getContext('2d');
+            const labels = dados.map(d => d.campo || 'N/A');
             if (camisetasChartInstance) camisetasChartInstance.destroy();
-            camisetasChartInstance = new Chart(ctxCamisetas, {
+            camisetasChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'Pedidos Pagos',
-                            data: dataPagos,
-                            backgroundColor: '#3b82f6', // azul
-                        },
-                        {
-                            label: 'Meta (Homens)',
-                            data: dataMeta,
-                            backgroundColor: '#e5e7eb', // cinza claro
-                        }
+                        { label: 'Pedidos Pagos', data: dados.map(d => d.pagos), backgroundColor: '#3b82f6' },
+                        { label: 'Meta (Homens)', data: dados.map(d => d.meta), backgroundColor: '#e5e7eb' }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: false },
-                        y: { stacked: false, beginAtZero: true }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
         }
 
+        // --- 6. INICIALIZAÇÃO ---
+        async function carregarDashboard() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const urlAlertEl = document.getElementById('url-alert');
 
-        // Inicia o carregamento quando a página é aberta
+            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_1_AQUI') {
+                urlAlertEl.classList.remove('hidden');
+                loadingEl.classList.add('hidden');
+                return;
+            }
+            urlAlertEl.classList.add('hidden');
+            
+            try {
+                loadingEl.classList.remove('hidden');
+                errorEl.classList.add('hidden');
+                mudarTab('principal'); // Garante que a tab principal esteja visível
+
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) throw new Error(`A requisição falhou: ${response.status}`);
+                
+                const data = await response.json();
+                if (data.status === 'error') throw new Error(`Erro no Apps Script: ${data.message}`);
+                
+                allData = data; // Salva os dados globalmente
+                
+                // Renderiza os dois dashboards
+                renderizarPrincipal(data.financeiro, data.campos);
+                renderizarResumido(data.financeiro, data.historico);
+
+                document.getElementById('last-updated').textContent = new Date().toLocaleString('pt-BR');
+
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = `Erro: ${err.message}. Verifique a URL do script e a estrutura da sua planilha.`;
+                errorEl.classList.remove('hidden');
+            } finally {
+                loadingEl.classList.add('hidden');
+            }
+        }
+
+        // Inicia o carregamento
         document.addEventListener('DOMContentLoaded', carregarDashboard);
     </script>
 </body>
 </html>
+
