@@ -77,8 +77,8 @@
                 <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
             </div>
             <div>
-                <!-- Logo da UMADSA -->
-                <img src="https://i.imgur.com/v8FkLKC.png" alt="Logo UMADSA" class="h-16">
+                <!-- Logo da UMADSA (CORRIGIDO) -->
+                <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16">
             </div>
         </header>
 
@@ -219,19 +219,20 @@
                 const data = await response.json();
                 
                 if (data.status === 'error') {
-                    throw new Error(`Erro no Apps Script: ${data.message} (Verifique os nomes das abas: 'Lancamentos', 'Campos', 'Historico_Anual')`);
+                    // Mensagem de erro ajustada para o script v1
+                    throw new Error(`Erro no Apps Script: ${data.message} (Verifique os nomes das abas: 'Lancamentos', 'Camisetas')`);
                 }
                 
                 allData = data; // Salva os dados globalmente
                 
-                // Renderiza o Resumo Financeiro (Novo)
+                // Renderiza o Resumo Financeiro
                 renderizarResumoFinanceiro(data.financeiro);
                 
-                // Renderiza a Seção de Camisetas (Mantida)
-                // Note que usamos data.campos, conforme o novo backend
-                renderizarKpisCamisetas(data.campos);
-                renderizarFiltrosCamisetas(data.campos);
-                renderizarGraficoCamisetas(data.campos);
+                // Renderiza a Seção de Camisetas (CORRIGIDO para data.camisetas)
+                // O script v1 retorna 'camisetas', não 'campos'
+                renderizarKpisCamisetas(data.camisetas);
+                renderizarFiltrosCamisetas(data.camisetas);
+                renderizarGraficoCamisetas(data.camisetas);
 
                 // Exibe o conteúdo
                 contentEl.classList.remove('hidden');
@@ -311,8 +312,8 @@
         }
 
         // --- Funções de Renderização Camisetas (Mantidas) ---
-
-        // (dados aqui é a lista de 'campos')
+        // (O nome da variável 'campos' aqui é só o nome do argumento, não afeta)
+        // (A lógica interna funciona para a estrutura da aba 'Camisetas')
         function renderizarKpisCamisetas(campos) {
             const totalPedidos = campos.reduce((acc, d) => acc + d.pagos, 0);
             const totalMeta = campos.reduce((acc, d) => acc + d.meta, 0);
@@ -323,7 +324,7 @@
             document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
         }
         
-        // (dados aqui é a lista de 'campos')
+        // (O nome da variável 'campos' aqui é só o nome do argumento)
         function renderizarFiltrosCamisetas(campos) {
             const container = document.getElementById('filtros-regionais');
             container.innerHTML = ''; // Limpa filtros existentes
@@ -357,11 +358,11 @@
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.regional === regional);
             });
-            
-            // Filtra os dados (allData.campos) e re-renderiza o gráfico
+            // Filtra os dados (allData.camisetas) e re-renderiza o gráfico
+            // CORRIGIDO de allData.campos para allData.camisetas
             const dadosFiltrados = (regional === 'TODAS')
-                ? allData.campos // Usa 'campos' do v2
-                : allData.campos.filter(d => d.regional === regional);
+                ? allData.camisetas // Usa 'camisetas' do v1
+                : allData.camisetas.filter(d => d.regional === regional);
                 
             renderizarGraficoCamisetas(dadosFiltrados);
         }
@@ -407,3 +408,4 @@
     </script>
 </body>
 </html>
+
