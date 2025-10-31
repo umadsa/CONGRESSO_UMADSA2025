@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Congresso UMADSA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js (para gráficos) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Fontes Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Classe para estado de carregamento */
+        .loading-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 1.2rem;
+            color: #6b7280;
+        }
+        /* Cards do Dashboard */
+        .kpi-card {
+            background-color: white;
+            border-radius: 0.75rem; /* 12px */
+            padding: 1.5rem; /* 24px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .kpi-title {
+            font-size: 0.875rem; /* 14px */
+            font-weight: 500;
+            color: #4b5563; /* text-gray-600 */
+            text-transform: uppercase;
+        }
+        .kpi-value {
+            font-size: 2.25rem; /* 36px */
+            font-weight: 700;
+            color: #111827; /* text-gray-900 */
+        }
+        .kpi-delta {
+            font-size: 1rem; /* 16px */
+            font-weight: 600;
+        }
+        /* Botões de Filtro */
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #d1d5db; /* border-gray-300 */
+        }
+        .filter-btn.active {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: white;
+            border-color: #1f2937;
+        }
+        .filter-btn:not(.active) {
+            background-color: white;
+            color: #374151; /* text-gray-700 */
+        }
+        .filter-btn:not(.active):hover {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Container Principal -->
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Cabeçalho -->
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Dashboard Congresso UMADSA</h1>
+            <p class="text-lg text-gray-600">Prestação de Contas e Status de Camisetas</p>
+            <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
+        </header>
+
+        <!-- Seção de Alerta: Cole a URL -->
+        <div id="url-alert" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
+            <p class="font-bold">Ação Necessária</p>
+            <p>Este dashboard ainda não está conectado. Você precisa colar a URL do seu Google Apps Script no código HTML (na variável `APPS_SCRIPT_URL`) para que ele funcione.</p>
+        </div>
+
+        <!-- Seção de Carregamento/Erro -->
+        <div id="loading" class="loading-state">Carregando dados da planilha...</div>
+        <div id="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 hidden" role="alert">
+            <p class="font-bold">Erro ao Carregar Dados</p>
+            <p id="error-message"></p>
+        </div>
+
+        <!-- Conteúdo do Dashboard (escondido até carregar) -->
+        <main id="dashboard-content" class="hidden">
+            
+            <!-- SEÇÃO FINANCEIRA -->
+            <section id="financeiro">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Visão Financeira</h2>
+                
+                <!-- KPIs Financeiros -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Total Recebido -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total Recebido (Pago)</div>
+                        <div id="kpi-recebido" class="kpi-value text-green-600">R$ 0,00</div>
+                        <div id="kpi-recebido-previsto" class="kpi-delta text-gray-500">de R$ 0,00 previsto</div>
+                    </div>
+                    <!-- Total de Gastos (Pago) -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total de Gastos (Pago)</div>
+                        <div id="kpi-gasto-pago" class="kpi-value text-red-600">R$ 0,00</div>
+                        <div id="kpi-gasto-previsto" class="kpi-delta text-gray-500">de R$ 0,00 previsto</div>
+                    </div>
+                    <!-- Saldo Atual (Pago) -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Saldo Atual (Recebido vs Pago)</div>
+                        <div id="kpi-saldo-atual" class="kpi-value">R$ 0,00</div>
+                        <div class="kpi-delta text-gray-500">Balanço do que já foi pago</div>
+                    </div>
+                    <!-- A Pagar (Gastos) -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total a Pagar (Gastos)</div>
+                        <div id="kpi-a-pagar" class="kpi-value text-yellow-600">R$ 0,00</div>
+                        <div class="kpi-delta text-gray-500">Valor pendente de saídas</div>
+                    </div>
+                </div>
+
+                <!-- Gráficos Financeiros -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="kpi-card">
+                        <h3 class="text-lg font-semibold mb-4">Composição dos Gastos (Pagos)</h3>
+                        <div class="w-full h-80 flex justify-center items-center">
+                            <canvas id="gastosChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <h3 class="text-lg font-semibold mb-4">Entradas vs Saídas</h3>
+                        <div class="w-full h-80 flex justify-center items-center">
+                            <canvas id="balancoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO CAMISETAS -->
+            <section id="camisetas" class="mt-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Status das Camisetas</h2>
+                
+                <!-- KPIs Camisetas -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Total de Pedidos Pagos -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total de Pedidos (Pagos)</div>
+                        <div id="kpi-total-pedidos" class="kpi-value text-blue-600">0</div>
+                    </div>
+                    <!-- Meta Total -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">Meta Total (Homens)</div>
+                        <div id="kpi-meta-total" class="kpi-value text-gray-800">0</div>
+                    </div>
+                    <!-- % Adesão Total -->
+                    <div class="kpi-card">
+                        <div class="kpi-title">% Adesão (Total)</div>
+                        <div id="kpi-adesao-total" class="kpi-value text-blue-600">0%</div>
+                    </div>
+                </div>
+
+                <!-- Filtros de Regional -->
+                <div class="mb-4">
+                    <label class="text-sm font-medium text-gray-700 mr-2">Filtrar por Regional:</label>
+                    <div id="filtros-regionais" class="flex flex-wrap gap-2">
+                        <!-- Botões serão inseridos aqui pelo JS -->
+                    </div>
+                </div>
+                
+                <!-- Gráfico Camisetas -->
+                <div class="kpi-card">
+                    <h3 class="text-lg font-semibold mb-4">Adesão por Campo</h3>
+                    <div class="w-full h-96">
+                        <canvas id="camisetasChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // =================================================================
+        // PASSO FINAL: COLE A URL DO SEU APPS SCRIPT AQUI
+        // =================================================================
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwP2w1pVgbokfRtZAypbg8UZXBAo1b1IP8d1R50cJM1wRWlSe8WYG293sedKtv7FbGx/exec';
+        // Ex: 'https://script.google.com/macros/s/SUA_ID_UNICA/exec'
+        // =================================================================
+
+        // Referências de Gráficos (globais para serem destruídos e recriados)
+        let gastosChartInstance = null;
+        let balancoChartInstance = null;
+        let camisetasChartInstance = null;
+
+        // Armazenamento de dados globais
+        let allData = {};
+        let activeRegionalFilter = 'TODAS';
+
+        // Função Principal para buscar e renderizar
+        async function carregarDashboard() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const errorMsgEl = document.getElementById('error-message');
+            const contentEl = document.getElementById('dashboard-content');
+            const urlAlertEl = document.getElementById('url-alert');
+
+            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_2_AQUI') {
+                urlAlertEl.classList.remove('hidden');
+                loadingEl.classList.add('hidden');
+                return;
+            }
+            urlAlertEl.classList.add('hidden');
+            
+            try {
+                loadingEl.classList.remove('hidden');
+                errorEl.classList.add('hidden');
+                contentEl.classList.add('hidden');
+
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) {
+                    throw new Error(`A requisição falhou com status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'error') {
+                    throw new Error(`Erro no Apps Script: ${data.message}`);
+                }
+                
+                allData = data; // Salva os dados globalmente
+                
+                // Renderiza tudo
+                renderizarKpisFinanceiros(data.financeiro);
+                renderizarGraficosFinanceiros(data.financeiro);
+                renderizarKpisCamisetas(data.camisetas);
+                renderizarFiltrosCamisetas(data.camisetas);
+                renderizarGraficoCamisetas(data.camisetas); // Renderiza o gráfico inicial (TODAS)
+
+                // Exibe o conteúdo
+                contentEl.classList.remove('hidden');
+                document.getElementById('last-updated').textContent = new Date().toLocaleString('pt-BR');
+
+            } catch (err) {
+                console.error(err);
+                errorMsgEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            } finally {
+                loadingEl.classList.add('hidden');
+            }
+        }
+
+        // --- Funções de Renderização Financeira ---
+
+        function formatarBRL(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function renderizarKpisFinanceiros(dados) {
+            const entradas = dados.filter(d => d.tipo.toLowerCase() === 'entrada');
+            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saída');
+
+            const totalRecebidoPago = entradas.reduce((acc, d) => acc + d.pago, 0);
+            const totalRecebidoPrevisto = entradas.reduce((acc, d) => acc + d.previsto, 0);
+            
+            const totalGastoPago = saidas.reduce((acc, d) => acc + d.pago, 0);
+            const totalGastoPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
+
+            const saldoAtual = totalRecebidoPago - totalGastoPago;
+            const totalAPagar = totalGastoPrevisto - totalGastoPago;
+
+            document.getElementById('kpi-recebido').textContent = formatarBRL(totalRecebidoPago);
+            document.getElementById('kpi-recebido-previsto').textContent = `de ${formatarBRL(totalRecebidoPrevisto)} previsto`;
+            
+            document.getElementById('kpi-gasto-pago').textContent = formatarBRL(totalGastoPago);
+            document.getElementById('kpi-gasto-previsto').textContent = `de ${formatarBRL(totalGastoPrevisto)} previsto`;
+
+            document.getElementById('kpi-saldo-atual').textContent = formatarBRL(saldoAtual);
+            document.getElementById('kpi-saldo-atual').className = `kpi-value ${saldoAtual >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+            document.getElementById('kpi-a-pagar').textContent = formatarBRL(totalAPagar);
+        }
+
+        function renderizarGraficosFinanceiros(dados) {
+            // 1. Gráfico de Gastos por Categoria (Pizza)
+            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saída');
+            const gastosPorCategoria = saidas.reduce((acc, d) => {
+                const categoria = d.categoria || 'Outros';
+                acc[categoria] = (acc[categoria] || 0) + d.pago;
+                return acc;
+            }, {});
+
+            const ctxGastos = document.getElementById('gastosChart').getContext('2d');
+            if (gastosChartInstance) gastosChartInstance.destroy();
+            gastosChartInstance = new Chart(ctxGastos, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(gastosPorCategoria),
+                    datasets: [{
+                        data: Object.values(gastosPorCategoria),
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6'],
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 2. Gráfico de Balanço (Barras)
+            const totalRecebidoPago = dados.filter(d => d.tipo.toLowerCase() === 'entrada').reduce((acc, d) => acc + d.pago, 0);
+            const totalGastoPago = saidas.reduce((acc, d) => acc + d.pago, 0);
+            const totalRecebidoPrevisto = dados.filter(d => d.tipo.toLowerCase() === 'entrada').reduce((acc, d) => acc + d.previsto, 0);
+            const totalGastoPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
+
+            const ctxBalanco = document.getElementById('balancoChart').getContext('2d');
+            if (balancoChartInstance) balancoChartInstance.destroy();
+            balancoChartInstance = new Chart(ctxBalanco, {
+                type: 'bar',
+                data: {
+                    labels: ['Entradas', 'Saídas'],
+                    datasets: [
+                        {
+                            label: 'Valor Pago/Recebido',
+                            data: [totalRecebidoPago, totalGastoPago],
+                            backgroundColor: ['#22c55e', '#ef4444'],
+                        },
+                        {
+                            label: 'Valor Previsto',
+                            data: [totalRecebidoPrevisto, totalGastoPrevisto],
+                            backgroundColor: ['#bbf7d0', '#fecaca'],
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // --- Funções de Renderização Camisetas ---
+
+        function renderizarKpisCamisetas(dados) {
+            const totalPedidos = dados.reduce((acc, d) => acc + d.pagos, 0);
+            const totalMeta = dados.reduce((acc, d) => acc + d.meta, 0);
+            const adesao = totalMeta > 0 ? (totalPedidos / totalMeta) * 100 : 0;
+
+            document.getElementById('kpi-total-pedidos').textContent = totalPedidos;
+            document.getElementById('kpi-meta-total').textContent = totalMeta;
+            document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
+        }
+        
+        function renderizarFiltrosCamisetas(dados) {
+            const container = document.getElementById('filtros-regionais');
+            container.innerHTML = ''; // Limpa filtros existentes
+
+            const regionais = [...new Set(dados.map(d => d.regional))];
+            
+            // Botão "TODAS"
+            const btnTodas = document.createElement('button');
+            btnTodas.className = 'filter-btn active';
+            btnTodas.textContent = 'TODAS';
+            btnTodas.dataset.regional = 'TODAS';
+            btnTodas.onclick = () => handleFiltroRegional('TODAS');
+            container.appendChild(btnTodas);
+
+            // Botões por regional
+            regionais.forEach(regional => {
+                if (!regional) return;
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = regional;
+                btn.dataset.regional = regional;
+                btn.onclick = () => handleFiltroRegional(regional);
+                container.appendChild(btn);
+            });
+        }
+        
+        function handleFiltroRegional(regional) {
+            activeRegionalFilter = regional;
+            
+            // Atualiza classe 'active' nos botões
+            document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.regional === regional);
+            });
+            
+            // Filtra os dados e re-renderiza o gráfico
+            const dadosFiltrados = (regional === 'TODAS')
+                ? allData.camisetas
+                : allData.camisetas.filter(d => d.regional === regional);
+                
+            renderizarGraficoCamisetas(dadosFiltrados);
+        }
+
+        function renderizarGraficoCamisetas(dados) {
+            const ctxCamisetas = document.getElementById('camisetasChart').getContext('2d');
+            
+            const labels = dados.map(d => d.campo || 'Não especificado');
+            const dataPagos = dados.map(d => d.pagos);
+            const dataMeta = dados.map(d => d.meta);
+
+            if (camisetasChartInstance) camisetasChartInstance.destroy();
+            camisetasChartInstance = new Chart(ctxCamisetas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Pedidos Pagos',
+                            data: dataPagos,
+                            backgroundColor: '#3b82f6', // azul
+                        },
+                        {
+                            label: 'Meta (Homens)',
+                            data: dataMeta,
+                            backgroundColor: '#e5e7eb', // cinza claro
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: false },
+                        y: { stacked: false, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+
+        // Inicia o carregamento quando a página é aberta
+        document.addEventListener('DOMContentLoaded', carregarDashboard);
+    </script>
+</body>
+</html>
