@@ -79,17 +79,19 @@
     <div class="max-w-7xl mx-auto">
         
         <!-- Cabeçalho -->
-        <header class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard Congresso UMADSA</h1>
-            <p class="text-lg text-gray-600">Prestação de Contas e Status de Camisetas</p>
-            <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
+        <header class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Dashboard Congresso UMADSA</h1>
+                <p class="text-lg text-gray-600">Prestação de Contas e Status de Camisetas</p>
+                <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
+            </div>
+             <!-- Logo Adicionada -->
+            <div>
+                <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16">
+            </div>
         </header>
 
         <!-- Seção de Alerta: Cole a URL -->
-                    <div>
-                <!-- Logo da UMADSA (CORRIGIDO) -->
-                <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16">
-            </div>
         <div id="url-alert" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
             <p class="font-bold">Ação Necessária</p>
             <p>Este dashboard ainda não está conectado. Você precisa colar a URL do seu Google Apps Script no código HTML (na variável `APPS_SCRIPT_URL`) para que ele funcione.</p>
@@ -183,6 +185,12 @@
                     <div id="filtros-regionais" class="flex flex-wrap gap-2">
                         <!-- Botões serão inseridos aqui pelo JS -->
                     </div>
+                    <!-- NOVO BOTÃO PARA O GRÁFICO TOTAL -->
+                    <div class="mt-2 border-t pt-2 border-gray-200">
+                        <button id="btn-filtro-total" class="filter-btn" onclick="handleTotalGraficoClick()">
+                            Ver Gráfico Total (Ministério)
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Gráfico Camisetas -->
@@ -222,7 +230,8 @@
             const contentEl = document.getElementById('dashboard-content');
             const urlAlertEl = document.getElementById('url-alert');
 
-            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_2_AQUI') {
+            // Ajuste na verificação da URL
+            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_2_AQUI' || APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_1_AQUI') {
                 urlAlertEl.classList.remove('hidden');
                 loadingEl.classList.add('hidden');
                 return;
@@ -252,7 +261,10 @@
                 renderizarGraficosFinanceiros(data.financeiro);
                 renderizarKpisCamisetas(data.camisetas);
                 renderizarFiltrosCamisetas(data.camisetas);
-                renderizarGraficoCamisetas(data.camisetas); // Renderiza o gráfico inicial (TODAS)
+                
+                // AJUSTE: Renderiza o gráfico inicial filtrando o "TOTAL"
+                const dadosIniciais = data.camisetas.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL');
+                renderizarGraficoCamisetas(dadosIniciais); // Renderiza o gráfico inicial (TODAS, sem "TOTAL")
 
                 // Exibe o conteúdo
                 contentEl.classList.remove('hidden');
@@ -270,7 +282,8 @@
         // --- Funções de Renderização Financeira ---
 
         function formatarBRL(valor) {
-            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            // Adicionado (valor || 0) para evitar erros se valor for undefined
+            return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function renderizarKpisFinanceiros(dados) {
@@ -350,15 +363,22 @@
             });
         }
 
-        // --- Funções de Renderização Camisetas ---
+        // --- Funções de Renderização Camisetas (AJUSTADAS) ---
 
         function renderizarKpisCamisetas(dados) {
-            const totalPedidos = dados.reduce((acc, d) => acc + d.pagos, 0);
-            const totalMeta = dados.reduce((acc, d) => acc + d.meta, 0);
-            const adesao = totalMeta > 0 ? (totalPedidos / totalMeta) * 100 : 0;
+            // AJUSTE: Filtrar a regional "TOTAL" dos cálculos de KPI
+            const dadosFiltrados = dados.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL');
+
+            // AJUSTE: Usar a meta fixa de 2500
+            const META_MINISTERIO = 2500;
+
+            const totalPedidos = dadosFiltrados.reduce((acc, d) => acc + d.pagos, 0);
+            // const totalMeta = dadosFiltrados.reduce((acc, d) => acc + d.meta, 0); // Não usa mais a meta da planilha
+            
+            const adesao = META_MINISTERIO > 0 ? (totalPedidos / META_MINISTERIO) * 100 : 0;
 
             document.getElementById('kpi-total-pedidos').textContent = totalPedidos;
-            document.getElementById('kpi-meta-total').textContent = totalMeta;
+            document.getElementById('kpi-meta-total').textContent = META_MINISTERIO; // Usa a meta fixa
             document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
         }
         
@@ -366,7 +386,11 @@
             const container = document.getElementById('filtros-regionais');
             container.innerHTML = ''; // Limpa filtros existentes
 
-            const regionais = [...new Set(dados.map(d => d.regional))];
+            // AJUSTE: Filtrar a regional "TOTAL" da lista de botões
+            const regionais = [...new Set(
+                dados.map(d => d.regional)
+                     .filter(r => r && r.toUpperCase() !== 'TOTAL') // <-- Filtra "TOTAL"
+            )];
             
             // Botão "TODAS"
             const btnTodas = document.createElement('button');
@@ -378,7 +402,7 @@
 
             // Botões por regional
             regionais.forEach(regional => {
-                if (!regional) return;
+                if (!regional) return; // Segurança extra
                 const btn = document.createElement('button');
                 btn.className = 'filter-btn';
                 btn.textContent = regional;
@@ -391,16 +415,41 @@
         function handleFiltroRegional(regional) {
             activeRegionalFilter = regional;
             
-            // Atualiza classe 'active' nos botões
+            // Atualiza classe 'active' nos botões regionais
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.regional === regional);
             });
+
+            // AJUSTE: Desativa o botão "Total" se um filtro regional for clicado
+            document.getElementById('btn-filtro-total').classList.remove('active');
             
             // Filtra os dados e re-renderiza o gráfico
+            
+            // AJUSTE: A visão "TODAS" filtra a linha "TOTAL"
             const dadosFiltrados = (regional === 'TODAS')
-                ? allData.camisetas
+                ? allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL') // Filtra "TOTAL"
                 : allData.camisetas.filter(d => d.regional === regional);
                 
+            renderizarGraficoCamisetas(dadosFiltrados);
+        }
+
+        // NOVA FUNÇÃO para lidar com o clique no botão "Total"
+        function handleTotalGraficoClick() {
+            // 1. Desativa todos os filtros de regionais
+            document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 2. Ativa o botão "Total"
+            document.getElementById('btn-filtro-total').classList.add('active');
+            
+            // 3. Atualiza o filtro ativo (apenas para referência)
+            activeRegionalFilter = 'TOTAL_GRAFICO'; 
+            
+            // 4. Busca SOmENTE a linha "TOTAL"
+            const dadosFiltrados = allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() === 'TOTAL');
+            
+            // 5. Renderiza o gráfico SÓ com essa linha
             renderizarGraficoCamisetas(dadosFiltrados);
         }
 
@@ -446,3 +495,4 @@
     </script>
 </body>
 </html>
+
