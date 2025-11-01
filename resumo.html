@@ -162,6 +162,12 @@
                     <div id="filtros-regionais" class="flex flex-wrap gap-2">
                         <!-- Botões serão inseridos aqui pelo JS -->
                     </div>
+                    <!-- NOVO BOTÃO PARA O GRÁFICO TOTAL -->
+                    <div class="mt-2 border-t pt-2 border-gray-200">
+                        <button id="btn-filtro-total" class="filter-btn" onclick="handleTotalGraficoClick()">
+                            Ver Gráfico Total (Ministério)
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Gráfico Camisetas -->
@@ -326,7 +332,10 @@
             const META_MINISTERIO = 2500; 
             
             // 2. O Total de Pedidos é a soma da coluna 'Pedidos Pagos' (d.pagos)
-            const totalPedidos = campos.reduce((acc, d) => acc + d.pagos, 0);
+            // AJUSTE: Filtrar qualquer linha onde a regional seja 'TOTAL'
+            const totalPedidos = campos
+                .filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL')
+                .reduce((acc, d) => acc + d.pagos, 0);
 
             // 3. A % Adesão é calculada com base na nova meta fixa.
             const adesao = META_MINISTERIO > 0 ? (totalPedidos / META_MINISTERIO) * 100 : 0;
@@ -346,7 +355,11 @@
             const container = document.getElementById('filtros-regionais');
             container.innerHTML = ''; // Limpa filtros existentes
 
-            const regionais = [...new Set(campos.map(d => d.regional))];
+            // AJUSTE: Filtrar 'TOTAL' da lista de botões de regionais
+            const regionais = [...new Set(
+                campos.map(d => d.regional)
+                      .filter(r => r && r.toUpperCase() !== 'TOTAL') // <-- Filtra regionais "TOTAL"
+            )];
             
             // Botão "TODAS"
             const btnTodas = document.createElement('button');
@@ -375,13 +388,38 @@
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.regional === regional);
             });
+
+            // AJUSTE: Desativa o botão "Total" se um filtro regional for clicado
+            document.getElementById('btn-filtro-total').classList.remove('active');
             
             // Filtra os dados (allData.camisetas) e re-renderiza o gráfico
             // CORRIGIDO de allData.campos para allData.camisetas
+            
+            // AJUSTE: Garantir que "TOTAL" nunca apareça no gráfico
             const dadosFiltrados = (regional === 'TODAS')
-                ? allData.camisetas // Usa 'camisetas' do v1
-                : allData.camisetas.filter(d => d.regional === regional);
+                ? allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL') // Usa 'camisetas' do v1 E filtra "TOTAL"
+                : allData.camisetas.filter(d => d.regional === regional); // Filtro específico (não será "TOTAL" graças ao filtro anterior)
                 
+            renderizarGraficoCamisetas(dadosFiltrados);
+        }
+
+        // NOVA FUNÇÃO para lidar com o clique no botão "Total"
+        function handleTotalGraficoClick() {
+            // 1. Desativa todos os filtros de regionais
+            document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 2. Ativa o botão "Total"
+            document.getElementById('btn-filtro-total').classList.add('active');
+            
+            // 3. Atualiza o filtro ativo (apenas para referência)
+            activeRegionalFilter = 'TOTAL_GRAFICO'; 
+            
+            // 4. Busca SOmENTE a linha "TOTAL"
+            const dadosFiltrados = allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() === 'TOTAL');
+            
+            // 5. Renderiza o gráfico SÓ com essa linha
             renderizarGraficoCamisetas(dadosFiltrados);
         }
 
@@ -407,7 +445,8 @@
                             backgroundColor: '#3b82f6', // azul
                         },
                         {
-                            label: 'Meta (Homens)', // <- Título do gráfico
+                            // AJUSTE: Corrigindo o label conforme seu HTML anterior
+                            label: 'Total (Homens) Esperado', 
                             data: dataMeta,
                             backgroundColor: '#e5e7eb', // cinza claro
                         }
@@ -429,4 +468,6 @@
     </script>
 </body>
 </html>
+
+
 
