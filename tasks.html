@@ -20,7 +20,12 @@
         }
         
         #task-modal { transition: opacity 0.3s ease; }
-        .modal-content { transition: transform 0.3s ease; }
+        
+        .modal-content {
+            transition: transform 0.3s ease;
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
         
         /* Classes de Status */
         .status-nao-iniciada { border-left-color: #9ca3af; } /* Cinza */
@@ -28,20 +33,17 @@
         .status-atrasada { border-left-color: #ef4444; } /* Vermelho */
         .status-concluida { border-left-color: #22c55e; } /* Verde */
         
-        /* Estilo do Log de Observações (Melhoria 2) */
         #modal-observacoes-log {
             background-color: #f9fafb;
             border: 1px solid #e5e7eb;
-            /* MELHORIA RESPONSIVA: Altura ajustável */
-            height: 100px; /* Altura padrão para mobile */
+            height: 100px; 
             font-size: 0.875rem;
             line-height: 1.4;
             color: #4b5563;
         }
-        /* Em ecrãs 'sm' (small) ou maiores, volta aos 150px */
-        @media (min-width: 640px) {
+        @media (min-width: 768px) { /* md: */
             #modal-observacoes-log {
-                height: 150px;
+                height: 150px; 
             }
         }
 
@@ -54,10 +56,10 @@
         }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
     <!-- Tela de Login -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4"> <!-- Adicionado p-4 -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
             <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16 mx-auto mb-4">
             <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Acesso ao Painel</h2>
@@ -75,7 +77,6 @@
         <header class="bg-white shadow-md p-4 flex justify-between items-center">
             <div class="flex items-center">
                 <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-10 mr-3">
-                <!-- MELHORIA RESPONSIVA: Tamanho do texto ajustado -->
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Painel de Tarefas</h1>
             </div>
             <button id="reload-button" class="text-gray-500 hover:text-blue-600" title="Recarregar Tarefas">
@@ -85,56 +86,24 @@
             </button>
         </header>
 
-        <!-- Filtros (Seção para dados do usuário) -->
-        <!-- Esta secção já era responsiva (md:grid-cols-2) -->
-        <div class="bg-gray-100 p-4 rounded-lg shadow-inner m-4">
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="user-regional" class="block text-sm font-medium text-gray-700">Sua Regional</label>
-                    <select id="user-regional" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option>REGIONAL_1</option>
-                        <option>REGIONAL_2</option>
-                        <option>REGIONAL_3</option>
-                        <option>REGIONAL_4</option>
-                        <option>REGIONAL_5</option>
-                        <option>REGIONAL_6</option>
-                        <option>REGIONAL_7</option>
-                        <option>DIRETORIA</option>
-                        <option>OUTRO</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="user-name" class="block text-sm font-medium text-gray-700">Seu Nome</label>
-                    <input type="text" id="user-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Digite seu nome">
-                </div>
-            </div>
-            <p id="user-data-error" class="text-red-500 text-sm mt-2 hidden">Por favor, preencha seu nome e regional para atualizar tarefas.</p>
-        </div>
-
         <!-- Painel Kanban -->
-        <!-- MELHORIA RESPONSIVA: Adicionado 'flex' e 'overflow-x-auto' para mobile. Mantém a grelha em 'md' e superior. -->
         <div class="p-4 flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto md:overflow-visible">
             
-            <!-- Coluna Não Iniciada -->
-            <!-- MELHORIA RESPONSIVA: Adicionado 'w-80' (largura fixa) e 'flex-shrink-0' para mobile -->
             <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-gray-700 mb-3">Não Iniciada (<span id="count-nao-iniciada">0</span>)</h2>
                 <div id="col-nao-iniciada" class="kanban-column space-y-3"></div>
             </div>
             
-            <!-- Coluna Em Andamento -->
             <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-blue-700 mb-3">Em Andamento (<span id="count-em-andamento">0</span>)</h2>
                 <div id="col-em-andamento" class="kanban-column space-y-3"></div>
             </div>
 
-            <!-- Coluna Atrasada -->
             <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-red-700 mb-3">Atrasada (<span id="count-atrasada">0</span>)</h2>
                 <div id="col-atrasada" class="kanban-column space-y-3"></div>
             </div>
 
-            <!-- Coluna Concluída -->
             <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-green-700 mb-3">Concluída (<span id="count-concluida">0</span>)</h2>
                 <div id="col-concluida" class="kanban-column space-y-3"></div>
@@ -143,61 +112,85 @@
 
     </div> <!-- Fim do #dashboard-main -->
 
-    <!-- Modal de Edição de Tarefa (ATUALIZADO) -->
-    <!-- MELHORIA RESPONSIVA: Adicionado 'p-4' ao wrapper do modal -->
+    <!-- Modal de Edição de Tarefa (ATUALIZADO COM DROPDOWN) -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden opacity-0 p-4" onclick="closeModal()">
-        <!-- MELHORIA RESPONSIVA: Removido 'mx-4' e 'sm:mx-0' que estavam no código anterior, 'p-4' no wrapper já cuida disso. -->
+        
         <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl transform scale-95" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-4">
+            
+            <div class="flex justify-between items-center mb-4 border-b pb-4">
                 <h3 id="modal-title" class="text-xl md:text-2xl font-bold text-gray-800">Atualizar Tarefa</h3>
                 <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
             </div>
             
-            <!-- Esta grelha 'md:grid-cols-2' já é responsiva e empilha em mobile -->
+            <!-- Grelha principal do modal (Info | Ações) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <!-- Coluna da Esquerda: Detalhes e Ações -->
+                <!-- Coluna da Esquerda: INFORMAÇÕES (Read-only) -->
                 <div>
-                    <!-- (Melhoria 1) Descrição da Tarefa -->
                     <h4 class="text-sm font-medium text-gray-500">Descrição</h4>
                     <p id="modal-descricao" class="text-base text-gray-700 mb-4 min-h-[50px] bg-gray-50 p-2 rounded"></p>
                     
                     <p class="text-base text-gray-700 mb-4"><strong class="font-semibold text-gray-500 block text-sm">Previsão:</strong> <span id="modal-previsao" class="font-semibold"></span></p>
 
-                    <hr class="my-4">
+                    <!-- NOVO: Campo para mostrar o responsável ATUAL -->
+                    <p class="text-base text-gray-700 mb-4"><strong class="font-semibold text-gray-500 block text-sm">Responsável Atual:</strong> <span id="modal-responsavel-atual" class="font-semibold">Ninguém</span></p>
 
-                    <!-- (Melhoria 3) Alterar Responsável -->
-                    <label for="modal-responsavel-input" class="block text-sm font-medium text-gray-700">Alterar Responsável</label>
-                    <input type="text" id="modal-responsavel-input" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                    <label for="modal-observacoes-log" class="block text-sm font-medium text-gray-700">Histórico de Alterações</label>
+                    <textarea id="modal-observacoes-log" class="w-full p-2 rounded-md mt-1" readonly></textarea>
+                </div>
 
-                    <!-- Mover Status -->
+                <!-- Coluna da Direita: AÇÕES (Inputs) -->
+                <div>
+                    <!-- Campos de utilizador (movidos para cá) -->
+                    <fieldset class="border rounded-md p-4 bg-gray-50">
+                        <legend class="text-sm font-medium text-gray-900 px-1">Informações do Atualizador</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="modal-user-name" class="block text-sm font-medium text-gray-700">Seu Nome</label>
+                                <input type="text" id="modal-user-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label for="modal-user-regional" class="block text-sm font-medium text-gray-700">Sua Regional</label>
+                                <select id="modal-user-regional" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option>REGIONAL_1</option>
+                                    <option>REGIONAL_2</option>
+                                    <option>REGIONAL_3</option>
+                                    <option>REGIONAL_4</option>
+                                    <option>REGIONAL_5</option>
+                                    <option>REGIONAL_6</option>
+                                    <option>REGIONAL_7</option>
+                                    <option>DIRETORIA</option>
+                                    <option>OUTRO</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p id="modal-user-data-error" class="text-red-500 text-sm mt-2 hidden">Preencha seu nome e regional.</p>
+                    </fieldset>
+                    
+                    <!-- Ações da Tarefa -->
+                    <!-- MUDANÇA: de Input para Select -->
+                    <label for="modal-responsavel-select" class="block text-sm font-medium text-gray-700 mt-4">Alterar Responsável Para:</label>
+                    <select id="modal-responsavel-select" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        <!-- Opções preenchidas pelo JS -->
+                    </select>
+
                     <label for="modal-status-select" class="block text-sm font-medium text-gray-700 mt-4">Alterar Status</label>
                     <select id="modal-status-select" class="w-full p-2 border border-gray-300 rounded-md mt-1">
                         <option value="Não iniciada">Não iniciada</option>
                         <option value="Em Andamento">Em Andamento</option>
                         <option value="Concluída">Concluída</option>
                     </select>
-                </div>
 
-                <!-- Coluna da Direita: Observações -->
-                <div>
-                    <!-- (Melhoria 2) Log de Alterações -->
-                    <label for="modal-observacoes-log" class="block text-sm font-medium text-gray-700">Histórico de Alterações</label>
-                    <textarea id="modal-observacoes-log" class="w-full p-2 rounded-md mt-1" readonly></textarea>
-                    
-                    <!-- (Melhoria 3) Adicionar Observação -->
                     <label for="modal-new-comment" class="block text-sm font-medium text-gray-700 mt-4">Adicionar Observação (Opcional)</label>
                     <textarea id="modal-new-comment" class="w-full p-2 border border-gray-300 rounded-md mt-1" rows="2" placeholder="Digite uma nova observação..."></textarea>
                 </div>
             </div>
 
             <!-- Rodapé do Modal -->
-            <!-- MELHORIA RESPONSIVA: Flex-col e stack em mobile, row em sm -->
             <div class="mt-6 border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                  <p class="text-xs text-gray-500 text-center sm:text-left">Última atualização por: <span id="modal-last-update">N/A</span></p>
                  
-                 <!-- ID da Tarefa (oculto) -->
-                <input type="hidden" id="modal-task-id">
+                 <input type="hidden" id="modal-task-id">
                 
                 <button id="modal-save-button" class="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition w-full sm:w-auto">
                     Salvar Alterações
@@ -222,7 +215,7 @@
 
         const SENHA_CORRETA = "umadsa2025";
 
-        // Elementos do DOM
+        // --- Elementos do DOM ---
         const loginScreen = document.getElementById('login-screen');
         const dashboardMain = document.getElementById('dashboard-main');
         const passwordInput = document.getElementById('password-input');
@@ -233,13 +226,14 @@
         const loadingMessage = document.getElementById('loading-message');
         const reloadButton = document.getElementById('reload-button');
 
+        // Elementos do Modal
         const modal = document.getElementById('task-modal');
         const modalSaveButton = document.getElementById('modal-save-button');
         
-        const userNameInput = document.getElementById('user-name');
-        const userRegionalInput = document.getElementById('user-regional');
-        const userDataError = document.getElementById('user-data-error');
-
+        // Variáveis para "lembrar" o último utilizador
+        let lastUserName = '';
+        let lastUserRegional = '';
+        
         let todasAsTarefas = [];
 
         // --- Lógica de Login ---
@@ -277,7 +271,7 @@
          * Busca as tarefas do Google Apps Script
          */
         async function carregarTarefas() {
-            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_3_AQUI') { // Correção mantida
+            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_3_AQUI') {
                 alert("ERRO DE CONFIGURAÇÃO: A URL do Apps Script não foi definida no arquivo HTML.");
                 return;
             }
@@ -303,6 +297,9 @@
                 todasAsTarefas = data.tarefas;
                 distribuirTarefas(todasAsTarefas);
                 
+                // NOVO: Popular o dropdown de responsáveis
+                popularDropdownResponsaveis(data.responsaveis);
+                
             } catch (error) {
                 console.error("Erro ao carregar tarefas:", error);
                 alert(`Falha ao carregar tarefas: ${error.message}`);
@@ -310,6 +307,36 @@
                 hideLoading();
             }
         }
+
+        /**
+         * NOVO: Popula o dropdown de responsáveis no modal
+         */
+        function popularDropdownResponsaveis(responsaveis) {
+            const select = document.getElementById('modal-responsavel-select');
+            select.innerHTML = ''; // Limpa opções antigas
+            
+            // Opção 1: Não alterar (valor vazio)
+            const defaultOption = document.createElement('option');
+            defaultOption.value = ""; // O valor vazio será "Não alterar"
+            defaultOption.textContent = "-- Não alterar --";
+            select.appendChild(defaultOption);
+
+            // Opção 2: Limpar responsável (valor especial)
+            const clearOption = document.createElement('option');
+            clearOption.value = "[LIMPAR]"; // Um valor especial
+            clearOption.textContent = "[ Remover Responsável ]";
+            clearOption.className = "text-red-600 font-medium";
+            select.appendChild(clearOption);
+
+            // Opção 3: Lista de nomes
+            responsaveis.forEach(nome => {
+                const option = document.createElement('option');
+                option.value = nome;
+                option.textContent = nome;
+                select.appendChild(option);
+            });
+        }
+
 
         /**
          * Distribui as tarefas nas colunas corretas
@@ -365,19 +392,17 @@
         }
 
         /**
-         * Cria o HTML para um card de tarefa (ATUALIZADO)
+         * Cria o HTML para um card de tarefa
          */
         function criarCardTarefa(tarefa) {
             const card = document.createElement('div');
-            // Simplifica o nome da classe de status
             const statusClass = (tarefa.status || 'nao-iniciada').toLowerCase().replace(' ', '-');
             card.className = `task-card bg-white p-3 rounded-md shadow-sm border-l-4 status-${statusClass}`;
             card.dataset.taskId = tarefa.id_tarefa;
             
-            // (Melhoria 1 e 4) Adiciona Descrição, Depto e Resp
             card.innerHTML = `
                 <h4 class="font-semibold text-gray-800">${tarefa.tarefa}</h4>
-                <p class="text-sm text-gray-700 mt-2">${tarefa.descricao || 'Sem descrição.'}</p>
+                <p class="text-sm text-gray-700 mt-2 truncate">${tarefa.descricao || 'Sem descrição.'}</p>
                 <hr class="my-2">
                 <div class="text-sm text-gray-600">
                     <p><strong>Depto:</strong> ${tarefa.departamento || 'N/A'}</p>
@@ -401,20 +426,19 @@
 
             // Preenche os dados do modal
             document.getElementById('modal-title').textContent = tarefa.tarefa;
-            
-            // (Melhoria 1) Descrição
             document.getElementById('modal-descricao').textContent = tarefa.descricao || 'Nenhuma descrição fornecida.';
             
-            // (Melhoria 3) Input do Responsável
-            document.getElementById('modal-responsavel-input').value = tarefa.responsavel || '';
+            // NOVO: Preenche o responsável atual
+            document.getElementById('modal-responsavel-atual').textContent = tarefa.responsavel || 'Ninguém';
+            
+            // Reseta o select de responsável
+            document.getElementById('modal-responsavel-select').value = "";
             
             document.getElementById('modal-previsao').textContent = tarefa.previsao_conclusao ? new Date(tarefa.previsao_conclusao).toLocaleDateString('pt-BR') : 'N/A';
             
-            // Define o status atual no select (ignorando "Atrasada" como opção selecionável)
+            // Define o status atual no select
             let statusSelecionavel = tarefa.status;
             if (statusSelecionavel === 'Atrasada') {
-                 // Se estiver atrasada, o status "real" dela (Não iniciada ou Em Andamento)
-                 // precisa ser encontrado. Vamos procurar no log.
                  const log = tarefa.observacoes_log || "";
                  if (log.includes("Status alterado para \"Em Andamento\"")) {
                     statusSelecionavel = "Em Andamento";
@@ -431,11 +455,16 @@
             // ID da Tarefa
             document.getElementById('modal-task-id').value = tarefa.id_tarefa;
             
-            // (Melhoria 2) Log de Observações
+            // Log de Observações
             document.getElementById('modal-observacoes-log').value = tarefa.observacoes_log || 'Nenhum histórico de alterações.';
             
             // Limpa o campo de novo comentário
             document.getElementById('modal-new-comment').value = '';
+
+            // Preenche os dados do utilizador "lembrados"
+            document.getElementById('modal-user-name').value = lastUserName;
+            document.getElementById('modal-user-regional').value = lastUserRegional || 'REGIONAL_1'; 
+            document.getElementById('modal-user-data-error').classList.add('hidden'); 
 
             // Última atualização (rodapé)
             let atualizacao = "Nenhuma atualização registrada.";
@@ -459,14 +488,18 @@
         }
 
         /**
-         * Verifica se os dados do usuário estão preenchidos
+         * Verifica se os dados do usuário (DENTRO DO MODAL) estão preenchidos
          */
-        function validarDadosUsuario() {
-            if (!userNameInput.value || !userRegionalInput.value) {
-                userDataError.classList.remove('hidden');
+        function validarDadosUsuarioDoModal() {
+            const nome = document.getElementById('modal-user-name').value;
+            const regional = document.getElementById('modal-user-regional').value;
+            const errorEl = document.getElementById('modal-user-data-error');
+            
+            if (!nome || !regional) {
+                errorEl.classList.remove('hidden');
                 return false;
             }
-            userDataError.classList.add('hidden');
+            errorEl.classList.add('hidden');
             return true;
         }
         
@@ -474,39 +507,60 @@
          * Salva a atualização (POST) - (ATUALIZADA)
          */
         async function salvarAtualizacaoTarefa() {
-            if (!validarDadosUsuario()) return;
+            if (!validarDadosUsuarioDoModal()) return;
 
             // Pega os dados do modal
             const idTarefa = document.getElementById('modal-task-id').value;
-            const nomeUsuario = userNameInput.value;
-            const nomeRegional = userRegionalInput.value;
+            const nomeUsuario = document.getElementById('modal-user-name').value;
+            const nomeRegional = document.getElementById('modal-user-regional').value;
             
             const novoStatus = document.getElementById('modal-status-select').value;
-            const novoResponsavel = document.getElementById('modal-responsavel-input').value;
+            const novoResponsavelInput = document.getElementById('modal-responsavel-select').value;
             const observacao = document.getElementById('modal-new-comment').value;
 
             // Pega os dados originais
             const originalStatus = modal.dataset.originalStatus;
             const originalResponsavel = modal.dataset.originalResponsavel;
 
-            // Verifica se algo realmente mudou
+            // Lógica de verificação de mudança
             const mudouStatus = novoStatus !== originalStatus;
-            const mudouResponsavel = novoResponsavel !== originalResponsavel;
             const temComentario = observacao.trim() !== '';
+
+            let mudouResponsavel = false;
+            let valorResponsavelParaEnviar; // Inicia como undefined
+
+            if (novoResponsavelInput === "[LIMPAR]") {
+                // Se o utilizador quer LIMPAR
+                if (originalResponsavel !== "") { // E o original não estava vazio
+                    mudouResponsavel = true;
+                    valorResponsavelParaEnviar = ""; // Envia string vazia para limpar
+                }
+            } else if (novoResponsavelInput !== "") { 
+                // Se o utilizador escolheu um NOME
+                if (novoResponsavelInput !== originalResponsavel) {
+                    mudouResponsavel = true;
+                    valorResponsavelParaEnviar = novoResponsavelInput; // Envia o nome
+                }
+            }
+            // Se novoResponsavelInput === "", (deixou em "--Não alterar--"),
+            // mudouResponsavel continua 'false' e valorResponsavelParaEnviar continua 'undefined'.
 
             if (!mudouStatus && !mudouResponsavel && !temComentario) {
                 alert("Nenhuma alteração foi feita.");
                 return;
             }
 
-            // Monta o payload SÓ com o que mudou
+            // "Lembra" os dados para a próxima vez
+            lastUserName = nomeUsuario;
+            lastUserRegional = nomeRegional;
+
             const payload = {
                 id_tarefa: idTarefa,
                 nome_usuario: nomeUsuario,
                 nome_regional: nomeRegional,
-                novo_status: novoStatus, // Envia o status (o backend vai comparar)
-                novo_responsavel: novoResponsavel, // Envia o responsável (backend compara)
-                observacao: observacao // Envia a observação (backend verifica)
+                novo_status: novoStatus, 
+                novo_responsavel: valorResponsavelParaEnviar, // Envia 'undefined' se não mudou, "" se limpou, ou "Nome" se mudou
+                observacao: observacao 
             };
 
             showLoading('Salvando atualização na planilha...');
