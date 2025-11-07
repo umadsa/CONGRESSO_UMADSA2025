@@ -32,10 +32,17 @@
         #modal-observacoes-log {
             background-color: #f9fafb;
             border: 1px solid #e5e7eb;
-            height: 150px;
+            /* MELHORIA RESPONSIVA: Altura ajustável */
+            height: 100px; /* Altura padrão para mobile */
             font-size: 0.875rem;
             line-height: 1.4;
             color: #4b5563;
+        }
+        /* Em ecrãs 'sm' (small) ou maiores, volta aos 150px */
+        @media (min-width: 640px) {
+            #modal-observacoes-log {
+                height: 150px;
+            }
         }
 
         .loader {
@@ -50,7 +57,7 @@
 <body>
 
     <!-- Tela de Login -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4"> <!-- Adicionado p-4 -->
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
             <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16 mx-auto mb-4">
             <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Acesso ao Painel</h2>
@@ -68,7 +75,8 @@
         <header class="bg-white shadow-md p-4 flex justify-between items-center">
             <div class="flex items-center">
                 <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-10 mr-3">
-                <h1 class="text-2xl font-bold text-gray-800">Painel de Tarefas do Congresso</h1>
+                <!-- MELHORIA RESPONSIVA: Tamanho do texto ajustado -->
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Painel de Tarefas</h1>
             </div>
             <button id="reload-button" class="text-gray-500 hover:text-blue-600" title="Recarregar Tarefas">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,6 +86,7 @@
         </header>
 
         <!-- Filtros (Seção para dados do usuário) -->
+        <!-- Esta secção já era responsiva (md:grid-cols-2) -->
         <div class="bg-gray-100 p-4 rounded-lg shadow-inner m-4">
              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -103,28 +112,30 @@
         </div>
 
         <!-- Painel Kanban -->
-        <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- MELHORIA RESPONSIVA: Adicionado 'flex' e 'overflow-x-auto' para mobile. Mantém a grelha em 'md' e superior. -->
+        <div class="p-4 flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto md:overflow-visible">
             
             <!-- Coluna Não Iniciada -->
-            <div class="bg-gray-200 p-3 rounded-lg">
+            <!-- MELHORIA RESPONSIVA: Adicionado 'w-80' (largura fixa) e 'flex-shrink-0' para mobile -->
+            <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-gray-700 mb-3">Não Iniciada (<span id="count-nao-iniciada">0</span>)</h2>
                 <div id="col-nao-iniciada" class="kanban-column space-y-3"></div>
             </div>
             
             <!-- Coluna Em Andamento -->
-            <div class="bg-gray-200 p-3 rounded-lg">
+            <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-blue-700 mb-3">Em Andamento (<span id="count-em-andamento">0</span>)</h2>
                 <div id="col-em-andamento" class="kanban-column space-y-3"></div>
             </div>
 
             <!-- Coluna Atrasada -->
-            <div class="bg-gray-200 p-3 rounded-lg">
+            <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-red-700 mb-3">Atrasada (<span id="count-atrasada">0</span>)</h2>
                 <div id="col-atrasada" class="kanban-column space-y-3"></div>
             </div>
 
             <!-- Coluna Concluída -->
-            <div class="bg-gray-200 p-3 rounded-lg">
+            <div class="bg-gray-200 p-3 rounded-lg w-80 md:w-auto flex-shrink-0">
                 <h2 class="text-lg font-semibold text-green-700 mb-3">Concluída (<span id="count-concluida">0</span>)</h2>
                 <div id="col-concluida" class="kanban-column space-y-3"></div>
             </div>
@@ -133,13 +144,16 @@
     </div> <!-- Fim do #dashboard-main -->
 
     <!-- Modal de Edição de Tarefa (ATUALIZADO) -->
-    <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden opacity-0" onclick="closeModal()">
+    <!-- MELHORIA RESPONSIVA: Adicionado 'p-4' ao wrapper do modal -->
+    <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden opacity-0 p-4" onclick="closeModal()">
+        <!-- MELHORIA RESPONSIVA: Removido 'mx-4' e 'sm:mx-0' que estavam no código anterior, 'p-4' no wrapper já cuida disso. -->
         <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl transform scale-95" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4">
-                <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Atualizar Tarefa</h3>
+                <h3 id="modal-title" class="text-xl md:text-2xl font-bold text-gray-800">Atualizar Tarefa</h3>
                 <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
             </div>
             
+            <!-- Esta grelha 'md:grid-cols-2' já é responsiva e empilha em mobile -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <!-- Coluna da Esquerda: Detalhes e Ações -->
@@ -178,13 +192,14 @@
             </div>
 
             <!-- Rodapé do Modal -->
-            <div class="mt-6 border-t pt-4 flex justify-between items-center">
-                 <p class="text-xs text-gray-500">Última atualização por: <span id="modal-last-update">N/A</span></p>
+            <!-- MELHORIA RESPONSIVA: Flex-col e stack em mobile, row em sm -->
+            <div class="mt-6 border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                 <p class="text-xs text-gray-500 text-center sm:text-left">Última atualização por: <span id="modal-last-update">N/A</span></p>
                  
                  <!-- ID da Tarefa (oculto) -->
                 <input type="hidden" id="modal-task-id">
                 
-                <button id="modal-save-button" class="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition">
+                <button id="modal-save-button" class="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition w-full sm:w-auto">
                     Salvar Alterações
                 </button>
             </div>
