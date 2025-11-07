@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Tarefas - UMADSA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Estilo do Painel Kanban */
+        .kanban-column {
+            min-height: 400px;
+        }
+        .task-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* Estilos do Modal */
+        #task-modal { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        
+        /* Classes de Status */
+        .status-nao-iniciada { border-left-color: #9ca3af; } /* Cinza */
+        .status-em-andamento { border-left-color: #3b82f6; } /* Azul */
+        .status-atrasada { border-left-color: #ef4444; } /* Vermelho */
+        .status-concluida { border-left-color: #22c55e; } /* Verde */
+        
+        /* Loading Spinner */
+        .loader {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tela de Login -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+            <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Acesso ao Painel</h2>
+            <p class="text-sm text-center text-gray-500 mb-4">Insira a senha para continuar.</p>
+            <input type="password" id="password-input" class="w-full px-4 py-2 border rounded-lg text-center" placeholder="Senha">
+            <button id="login-button" class="w-full bg-blue-600 text-white py-2 rounded-lg mt-4 font-semibold hover:bg-blue-700 transition">Entrar</button>
+            <p id="login-error" class="text-red-500 text-center text-sm mt-2 hidden">Senha incorreta.</p>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal do Painel (Oculto por padrão) -->
+    <div id="dashboard-main" class="hidden">
+
+        <!-- Cabeçalho -->
+        <header class="bg-white shadow-md p-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-10 mr-3">
+                <h1 class="text-2xl font-bold text-gray-800">Painel de Tarefas do Congresso</h1>
+            </div>
+            <button id="reload-button" class="text-gray-500 hover:text-blue-600" title="Recarregar Tarefas">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2a8.001 8.001 0 0015.357 2m0 0H15" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Filtros (Seção para dados do usuário) -->
+        <div class="bg-gray-100 p-4 rounded-lg shadow-inner m-4">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="user-regional" class="block text-sm font-medium text-gray-700">Sua Regional</label>
+                    <select id="user-regional" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option>REGIONAL_1</option>
+                        <option>REGIONAL_2</option>
+                        <option>REGIONAL_3</option>
+                        <option>REGIONAL_4</option>
+                        <option>REGIONAL_5</option>
+                        <option>REGIONAL_6</option>
+                        <option>REGIONAL_7</option>
+                        <option>DIRETORIA</option>
+                        <option>OUTRO</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="user-name" class="block text-sm font-medium text-gray-700">Seu Nome</label>
+                    <input type="text" id="user-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Digite seu nome">
+                </div>
+            </div>
+            <p id="user-data-error" class="text-red-500 text-sm mt-2 hidden">Por favor, preencha seu nome e regional para atualizar tarefas.</p>
+        </div>
+
+        <!-- Painel Kanban -->
+        <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Coluna Não Iniciada -->
+            <div class="bg-gray-200 p-3 rounded-lg">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Não Iniciada (<span id="count-nao-iniciada">0</span>)</h2>
+                <div id="col-nao-iniciada" class="kanban-column space-y-3">
+                    <!-- Cards de Tarefas aqui -->
+                </div>
+            </div>
+            
+            <!-- Coluna Em Andamento -->
+            <div class="bg-gray-200 p-3 rounded-lg">
+                <h2 class="text-lg font-semibold text-blue-700 mb-3">Em Andamento (<span id="count-em-andamento">0</span>)</h2>
+                <div id="col-em-andamento" class="kanban-column space-y-3">
+                    <!-- Cards de Tarefas aqui -->
+                </div>
+            </div>
+
+            <!-- Coluna Atrasada -->
+            <div class="bg-gray-200 p-3 rounded-lg">
+                <h2 class="text-lg font-semibold text-red-700 mb-3">Atrasada (<span id="count-atrasada">0</span>)</h2>
+                <div id="col-atrasada" class="kanban-column space-y-3">
+                    <!-- Cards de Tarefas aqui -->
+                </div>
+            </div>
+
+            <!-- Coluna Concluída -->
+            <div class="bg-gray-200 p-3 rounded-lg">
+                <h2 class="text-lg font-semibold text-green-700 mb-3">Concluída (<span id="count-concluida">0</span>)</h2>
+                <div id="col-concluida" class="kanban-column space-y-3">
+                    <!-- Cards de Tarefas aqui -->
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- Fim do #dashboard-main -->
+
+    <!-- Modal de Edição de Tarefa -->
+    <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden opacity-0" onclick="closeModal()">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-lg transform scale-95" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Atualizar Tarefa</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            
+            <div>
+                <p class="text-lg text-gray-700 mb-1"><strong class="font-semibold">Departamento:</strong> <span id="modal-departamento"></span></p>
+                <p class="text-lg text-gray-700 mb-1"><strong class="font-semibold">Responsável:</strong> <span id="modal-responsavel"></span></p>
+                <p class="text-lg text-gray-700 mb-4"><strong class="font-semibold">Previsão:</strong> <span id="modal-previsao"></span></p>
+                
+                <hr class="my-4">
+                
+                <label for="modal-status-select" class="block text-sm font-medium text-gray-700 mb-2">Mover para:</label>
+                <select id="modal-status-select" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="Não iniciada">Não iniciada</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Concluída">Concluída</option>
+                </select>
+                
+                <!-- ID da Tarefa (oculto) -->
+                <input type="hidden" id="modal-task-id">
+                
+                <button id="modal-save-button" class="w-full bg-blue-600 text-white py-2 rounded-lg mt-4 font-semibold hover:bg-blue-700 transition">Salvar Alteração</eRButton>
+                
+                <p class="text-xs text-gray-500 mt-4">Última atualização por: <span id="modal-last-update">N/A</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tela de Carregamento (Overlay) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 flex flex-col items-center justify-center z-50 hidden">
+        <div class="loader h-12 w-12 rounded-full border-4 border-t-4 border-gray-200"></div>
+        <p id="loading-message" class="text-gray-700 font-semibold mt-4">Carregando...</p>
+    </div>
+
+
+    <script>
+        // =================================================================
+        // PASSO FINAL: COLE A URL DO SEU APPS SCRIPT AQUI (da nova implantação)
+        // =================================================================
+        const APPS_SCRIPT_URL = 'COLE_A_URL_DO_PASSO_3_AQUI';
+        // =================================================================
+
+        const SENHA_CORRETA = "umadsa2025";
+
+        // Elementos do DOM
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardMain = document.getElementById('dashboard-main');
+        const passwordInput = document.getElementById('password-input');
+        const loginButton = document.getElementById('login-button');
+        const loginError = document.getElementById('login-error');
+        
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingMessage = document.getElementById('loading-message');
+        const reloadButton = document.getElementById('reload-button');
+
+        const modal = document.getElementById('task-modal');
+        const modalSaveButton = document.getElementById('modal-save-button');
+        
+        const userNameInput = document.getElementById('user-name');
+        const userRegionalInput = document.getElementById('user-regional');
+        const userDataError = document.getElementById('user-data-error');
+
+        let todasAsTarefas = [];
+
+        // --- Lógica de Login ---
+        
+        function tentarLogin() {
+            if (passwordInput.value === SENHA_CORRETA) {
+                loginScreen.classList.add('hidden');
+                dashboardMain.classList.remove('hidden');
+                carregarTarefas(); // Carrega as tarefas após o login
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        }
+        
+        loginButton.addEventListener('click', tentarLogin);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') tentarLogin();
+        });
+
+        // --- Lógica do Painel ---
+        
+        reloadButton.addEventListener('click', carregarTarefas);
+        modalSaveButton.addEventListener('click', salvarAtualizacaoTarefa);
+
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        /**
+         * Busca as tarefas do Google Apps Script
+         */
+        async function carregarTarefas() {
+            if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbyi9mimy_IqpRugsu7BkyZTY9ZM5He1I7hWVaibEMB2zo5ZM0bp4ZaGf2fnA2Wi5tCp/exec') {
+                alert("ERRO DE CONFIGURAÇÃO: A URL do Apps Script não foi definida no arquivo HTML.");
+                return;
+            }
+            
+            showLoading('Buscando tarefas na planilha...');
+            
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro de rede: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'error') {
+                    throw new Error(`Erro no Apps Script: ${data.message}`);
+                }
+
+                todasAsTarefas = data.tarefas;
+                distribuirTarefas(todasAsTarefas);
+                
+            } catch (error) {
+                console.error("Erro ao carregar tarefas:", error);
+                alert(`Falha ao carregar tarefas: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Distribui as tarefas nas colunas corretas
+         */
+        function distribuirTarefas(tarefas) {
+            // Limpa colunas
+            const colunas = {
+                'nao-iniciada': document.getElementById('col-nao-iniciada'),
+                'em-andamento': document.getElementById('col-em-andamento'),
+                'atrasada': document.getElementById('col-atrasada'),
+                'concluida': document.getElementById('col-concluida'),
+            };
+            Object.values(colunas).forEach(col => col.innerHTML = '');
+
+            // Contadores
+            const contadores = { 'Não iniciada': 0, 'Em Andamento': 0, 'Atrasada': 0, 'Concluída': 0 };
+
+            tarefas.forEach(tarefa => {
+                const status = tarefa.status || 'Não iniciada';
+                let colunaId = '';
+                
+                switch(status) {
+                    case 'Não iniciada':
+                        colunaId = 'nao-iniciada';
+                        contadores['Não iniciada']++;
+                        break;
+                    case 'Em Andamento':
+                        colunaId = 'em-andamento';
+                        contadores['Em Andamento']++;
+                        break;
+                    case 'Atrasada':
+                        colunaId = 'atrasada';
+                        contadores['Atrasada']++;
+                        break;
+                    case 'Concluída':
+                        colunaId = 'concluida';
+                        contadores['Concluída']++;
+                        break;
+                    default:
+                        colunaId = 'nao-iniciada';
+                        contadores['Não iniciada']++;
+                }
+
+                if (colunas[colunaId]) {
+                    const card = criarCardTarefa(tarefa);
+                    colunas[colunaId].appendChild(card);
+                }
+            });
+
+            // Atualiza contagens
+            document.getElementById('count-nao-iniciada').textContent = contadores['Não iniciada'];
+            document.getElementById('count-em-andamento').textContent = contadores['Em Andamento'];
+            document.getElementById('count-atrasada').textContent = contadores['Atrasada'];
+            document.getElementById('count-concluida').textContent = contadores['Concluída'];
+        }
+
+        /**
+         * Cria o HTML para um card de tarefa
+         */
+        function criarCardTarefa(tarefa) {
+            const card = document.createElement('div');
+            card.className = `task-card bg-white p-3 rounded-md shadow-sm border-l-4 status-${tarefa.status.toLowerCase().replace(' ', '-')}`;
+            card.dataset.taskId = tarefa.id_tarefa;
+            
+            card.innerHTML = `
+                <h4 class="font-semibold text-gray-800">${tarefa.tarefa}</h4>
+                <p class="text-sm text-gray-600 mt-1">${tarefa.departamento || 'N/A'}</p>
+                <p class="text-sm text-gray-600 mt-1"><strong>Resp:</strong> ${tarefa.responsavel || 'N/A'}</p>
+                <p class="text-sm font-medium ${tarefa.status === 'Atrasada' ? 'text-red-600' : 'text-gray-500'} mt-2">
+                    Previsão: ${tarefa.previsao_conclusao ? new Date(tarefa.previsao_conclusao).toLocaleDateString('pt-BR') : 'N/A'}
+                </p>
+            `;
+            
+            card.addEventListener('click', () => abrirModal(tarefa.id_tarefa));
+            return card;
+        }
+
+        /**
+         * Lógica do Modal
+         */
+        function abrirModal(idTarefa) {
+            const tarefa = todasAsTarefas.find(t => t.id_tarefa === idTarefa);
+            if (!tarefa) return;
+
+            // Preenche os dados do modal
+            document.getElementById('modal-title').textContent = tarefa.tarefa;
+            document.getElementById('modal-departamento').textContent = tarefa.departamento || 'N/A';
+            document.getElementById('modal-responsavel').textContent = tarefa.responsavel || 'N/A';
+            document.getElementById('modal-previsao').textContent = tarefa.previsao_conclusao ? new Date(tarefa.previsao_conclusao).toLocaleDateString('pt-BR') : 'N/A';
+            
+            // Define o status atual no select (ignorando "Atrasada" como opção selecionável)
+            let statusSelecionavel = tarefa.status;
+            if (statusSelecionavel === 'Atrasada') {
+                 // Se estiver atrasada, o status "real" dela é Não Iniciada ou Em Andamento
+                 // Aqui, vamos assumir que ela volta para "Em Andamento" se não soubermos
+                 // (O ideal seria a planilha ter o status "real" e o "calculado")
+                 // Para simplificar, deixamos "Em Andamento"
+                 statusSelecionavel = 'Em Andamento'; 
+            }
+            document.getElementById('modal-status-select').value = statusSelecionavel;
+            
+            document.getElementById('modal-task-id').value = tarefa.id_tarefa;
+            
+            let atualizacao = "Nenhuma atualização registrada.";
+            if (tarefa.atualizado_por && tarefa.data_atualizacao) {
+                atualizacao = `${tarefa.atualizado_por} em ${new Date(tarefa.data_atualizacao).toLocaleString('pt-BR')}`;
+            }
+            document.getElementById('modal-last-update').textContent = atualizacao;
+
+            // Abre o modal
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        /**
+         * Verifica se os dados do usuário estão preenchidos
+         */
+        function validarDadosUsuario() {
+            if (!userNameInput.value || !userRegionalInput.value) {
+                userDataError.classList.remove('hidden');
+                return false;
+            }
+            userDataError.classList.add('hidden');
+            return true;
+        }
+        
+        /**
+         * Salva a atualização (POST)
+         */
+        async function salvarAtualizacaoTarefa() {
+            if (!validarDadosUsuario()) return;
+
+            const idTarefa = document.getElementById('modal-task-id').value;
+            const novoStatus = document.getElementById('modal-status-select').value;
+            const nomeUsuario = userNameInput.value;
+            const nomeRegional = userRegionalInput.value;
+
+            const payload = {
+                id_tarefa: idTarefa,
+                novo_status: novoStatus,
+                nome_usuario: nomeUsuario,
+                nome_regional: nomeRegional
+            };
+
+            showLoading('Salvando atualização na planilha...');
+            
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    body: JSON.stringify(payload),
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', // Apps Script web apps preferem text/plain para JSON
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro de rede: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'error') {
+                    throw new Error(`Erro no Apps Script ao salvar: ${data.message}`);
+                }
+
+                // Sucesso!
+                closeModal();
+                await carregarTarefas(); // Recarrega tudo para refletir a mudança
+
+            } catch (error) {
+                console.error("Erro ao salvar tarefa:", error);
+                alert(`Falha ao salvar: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+    </script>
+</body>
+</html>
