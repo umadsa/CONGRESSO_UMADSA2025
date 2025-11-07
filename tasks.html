@@ -9,10 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         
-        /* Estilo do Painel Kanban */
-        .kanban-column {
-            min-height: 400px;
-        }
+        .kanban-column { min-height: 400px; }
         .task-card {
             transition: all 0.2s ease;
             cursor: pointer;
@@ -22,7 +19,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
-        /* Estilos do Modal */
         #task-modal { transition: opacity 0.3s ease; }
         .modal-content { transition: transform 0.3s ease; }
         
@@ -32,7 +28,16 @@
         .status-atrasada { border-left-color: #ef4444; } /* Vermelho */
         .status-concluida { border-left-color: #22c55e; } /* Verde */
         
-        /* Loading Spinner */
+        /* Estilo do Log de Observações (Melhoria 2) */
+        #modal-observacoes-log {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            height: 150px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #4b5563;
+        }
+
         .loader {
             border-top-color: #3498db;
             animation: spin 1s linear infinite;
@@ -103,66 +108,85 @@
             <!-- Coluna Não Iniciada -->
             <div class="bg-gray-200 p-3 rounded-lg">
                 <h2 class="text-lg font-semibold text-gray-700 mb-3">Não Iniciada (<span id="count-nao-iniciada">0</span>)</h2>
-                <div id="col-nao-iniciada" class="kanban-column space-y-3">
-                    <!-- Cards de Tarefas aqui -->
-                </div>
+                <div id="col-nao-iniciada" class="kanban-column space-y-3"></div>
             </div>
             
             <!-- Coluna Em Andamento -->
             <div class="bg-gray-200 p-3 rounded-lg">
                 <h2 class="text-lg font-semibold text-blue-700 mb-3">Em Andamento (<span id="count-em-andamento">0</span>)</h2>
-                <div id="col-em-andamento" class="kanban-column space-y-3">
-                    <!-- Cards de Tarefas aqui -->
-                </div>
+                <div id="col-em-andamento" class="kanban-column space-y-3"></div>
             </div>
 
             <!-- Coluna Atrasada -->
             <div class="bg-gray-200 p-3 rounded-lg">
                 <h2 class="text-lg font-semibold text-red-700 mb-3">Atrasada (<span id="count-atrasada">0</span>)</h2>
-                <div id="col-atrasada" class="kanban-column space-y-3">
-                    <!-- Cards de Tarefas aqui -->
-                </div>
+                <div id="col-atrasada" class="kanban-column space-y-3"></div>
             </div>
 
             <!-- Coluna Concluída -->
             <div class="bg-gray-200 p-3 rounded-lg">
                 <h2 class="text-lg font-semibold text-green-700 mb-3">Concluída (<span id="count-concluida">0</span>)</h2>
-                <div id="col-concluida" class="kanban-column space-y-3">
-                    <!-- Cards de Tarefas aqui -->
-                </div>
+                <div id="col-concluida" class="kanban-column space-y-3"></div>
             </div>
         </div>
 
     </div> <!-- Fim do #dashboard-main -->
 
-    <!-- Modal de Edição de Tarefa -->
+    <!-- Modal de Edição de Tarefa (ATUALIZADO) -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden opacity-0" onclick="closeModal()">
-        <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-lg transform scale-95" onclick="event.stopPropagation()">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl transform scale-95" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Atualizar Tarefa</h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800">&times;</button>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
             </div>
             
-            <div>
-                <p class="text-lg text-gray-700 mb-1"><strong class="font-semibold">Departamento:</strong> <span id="modal-departamento"></span></p>
-                <p class="text-lg text-gray-700 mb-1"><strong class="font-semibold">Responsável:</strong> <span id="modal-responsavel"></span></p>
-                <p class="text-lg text-gray-700 mb-4"><strong class="font-semibold">Previsão:</strong> <span id="modal-previsao"></span></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <hr class="my-4">
-                
-                <label for="modal-status-select" class="block text-sm font-medium text-gray-700 mb-2">Mover para:</label>
-                <select id="modal-status-select" class="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="Não iniciada">Não iniciada</option>
-                    <option value="Em Andamento">Em Andamento</option>
-                    <option value="Concluída">Concluída</option>
-                </select>
-                
-                <!-- ID da Tarefa (oculto) -->
+                <!-- Coluna da Esquerda: Detalhes e Ações -->
+                <div>
+                    <!-- (Melhoria 1) Descrição da Tarefa -->
+                    <h4 class="text-sm font-medium text-gray-500">Descrição</h4>
+                    <p id="modal-descricao" class="text-base text-gray-700 mb-4 min-h-[50px] bg-gray-50 p-2 rounded"></p>
+                    
+                    <p class="text-base text-gray-700 mb-4"><strong class="font-semibold text-gray-500 block text-sm">Previsão:</strong> <span id="modal-previsao" class="font-semibold"></span></p>
+
+                    <hr class="my-4">
+
+                    <!-- (Melhoria 3) Alterar Responsável -->
+                    <label for="modal-responsavel-input" class="block text-sm font-medium text-gray-700">Alterar Responsável</label>
+                    <input type="text" id="modal-responsavel-input" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+
+                    <!-- Mover Status -->
+                    <label for="modal-status-select" class="block text-sm font-medium text-gray-700 mt-4">Alterar Status</label>
+                    <select id="modal-status-select" class="w-full p-2 border border-gray-300 rounded-md mt-1">
+                        <option value="Não iniciada">Não iniciada</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Concluída">Concluída</option>
+                    </select>
+                </div>
+
+                <!-- Coluna da Direita: Observações -->
+                <div>
+                    <!-- (Melhoria 2) Log de Alterações -->
+                    <label for="modal-observacoes-log" class="block text-sm font-medium text-gray-700">Histórico de Alterações</label>
+                    <textarea id="modal-observacoes-log" class="w-full p-2 rounded-md mt-1" readonly></textarea>
+                    
+                    <!-- (Melhoria 3) Adicionar Observação -->
+                    <label for="modal-new-comment" class="block text-sm font-medium text-gray-700 mt-4">Adicionar Observação (Opcional)</label>
+                    <textarea id="modal-new-comment" class="w-full p-2 border border-gray-300 rounded-md mt-1" rows="2" placeholder="Digite uma nova observação..."></textarea>
+                </div>
+            </div>
+
+            <!-- Rodapé do Modal -->
+            <div class="mt-6 border-t pt-4 flex justify-between items-center">
+                 <p class="text-xs text-gray-500">Última atualização por: <span id="modal-last-update">N/A</span></p>
+                 
+                 <!-- ID da Tarefa (oculto) -->
                 <input type="hidden" id="modal-task-id">
                 
-                <button id="modal-save-button" class="w-full bg-blue-600 text-white py-2 rounded-lg mt-4 font-semibold hover:bg-blue-700 transition">Salvar Alteração</eRButton>
-                
-                <p class="text-xs text-gray-500 mt-4">Última atualização por: <span id="modal-last-update">N/A</span></p>
+                <button id="modal-save-button" class="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    Salvar Alterações
+                </button>
             </div>
         </div>
     </div>
@@ -176,7 +200,7 @@
 
     <script>
         // =================================================================
-        // PASSO FINAL: COLE A URL DO SEU APPS SCRIPT AQUI (da nova implantação)
+        // URL DO SEU APPS SCRIPT (v2 - tarefas.gs)
         // =================================================================
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyi9mimy_IqpRugsu7BkyZTY9ZM5He1I7hWVaibEMB2zo5ZM0bp4ZaGf2fnA2Wi5tCp/exec';
         // =================================================================
@@ -209,7 +233,7 @@
             if (passwordInput.value === SENHA_CORRETA) {
                 loginScreen.classList.add('hidden');
                 dashboardMain.classList.remove('hidden');
-                carregarTarefas(); // Carrega as tarefas após o login
+                carregarTarefas(); 
             } else {
                 loginError.classList.remove('hidden');
             }
@@ -238,9 +262,7 @@
          * Busca as tarefas do Google Apps Script
          */
         async function carregarTarefas() {
-            // AQUI ESTÁ A CORREÇÃO:
-            // O 'if' deve verificar pelo texto do placeholder original, e não pela sua URL.
-            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_3_AQUI') {
+            if (APPS_SCRIPT_URL === 'COLE_A_URL_DO_PASSO_3_AQUI') { // Correção mantida
                 alert("ERRO DE CONFIGURAÇÃO: A URL do Apps Script não foi definida no arquivo HTML.");
                 return;
             }
@@ -278,7 +300,6 @@
          * Distribui as tarefas nas colunas corretas
          */
         function distribuirTarefas(tarefas) {
-            // Limpa colunas
             const colunas = {
                 'nao-iniciada': document.getElementById('col-nao-iniciada'),
                 'em-andamento': document.getElementById('col-em-andamento'),
@@ -287,7 +308,6 @@
             };
             Object.values(colunas).forEach(col => col.innerHTML = '');
 
-            // Contadores
             const contadores = { 'Não iniciada': 0, 'Em Andamento': 0, 'Atrasada': 0, 'Concluída': 0 };
 
             tarefas.forEach(tarefa => {
@@ -330,17 +350,24 @@
         }
 
         /**
-         * Cria o HTML para um card de tarefa
+         * Cria o HTML para um card de tarefa (ATUALIZADO)
          */
         function criarCardTarefa(tarefa) {
             const card = document.createElement('div');
-            card.className = `task-card bg-white p-3 rounded-md shadow-sm border-l-4 status-${tarefa.status.toLowerCase().replace(' ', '-')}`;
+            // Simplifica o nome da classe de status
+            const statusClass = (tarefa.status || 'nao-iniciada').toLowerCase().replace(' ', '-');
+            card.className = `task-card bg-white p-3 rounded-md shadow-sm border-l-4 status-${statusClass}`;
             card.dataset.taskId = tarefa.id_tarefa;
             
+            // (Melhoria 1 e 4) Adiciona Descrição, Depto e Resp
             card.innerHTML = `
                 <h4 class="font-semibold text-gray-800">${tarefa.tarefa}</h4>
-                <p class="text-sm text-gray-600 mt-1">${tarefa.departamento || 'N/A'}</p>
-                <p class="text-sm text-gray-600 mt-1"><strong>Resp:</strong> ${tarefa.responsavel || 'N/A'}</p>
+                <p class="text-sm text-gray-700 mt-2">${tarefa.descricao || 'Sem descrição.'}</p>
+                <hr class="my-2">
+                <div class="text-sm text-gray-600">
+                    <p><strong>Depto:</strong> ${tarefa.departamento || 'N/A'}</p>
+                    <p><strong>Resp:</strong> ${tarefa.responsavel || 'N/A'}</p>
+                </div>
                 <p class="text-sm font-medium ${tarefa.status === 'Atrasada' ? 'text-red-600' : 'text-gray-500'} mt-2">
                     Previsão: ${tarefa.previsao_conclusao ? new Date(tarefa.previsao_conclusao).toLocaleDateString('pt-BR') : 'N/A'}
                 </p>
@@ -351,7 +378,7 @@
         }
 
         /**
-         * Lógica do Modal
+         * Lógica do Modal (ATUALIZADA)
          */
         function abrirModal(idTarefa) {
             const tarefa = todasAsTarefas.find(t => t.id_tarefa === idTarefa);
@@ -359,23 +386,43 @@
 
             // Preenche os dados do modal
             document.getElementById('modal-title').textContent = tarefa.tarefa;
-            document.getElementById('modal-departamento').textContent = tarefa.departamento || 'N/A';
-            document.getElementById('modal-responsavel').textContent = tarefa.responsavel || 'N/A';
+            
+            // (Melhoria 1) Descrição
+            document.getElementById('modal-descricao').textContent = tarefa.descricao || 'Nenhuma descrição fornecida.';
+            
+            // (Melhoria 3) Input do Responsável
+            document.getElementById('modal-responsavel-input').value = tarefa.responsavel || '';
+            
             document.getElementById('modal-previsao').textContent = tarefa.previsao_conclusao ? new Date(tarefa.previsao_conclusao).toLocaleDateString('pt-BR') : 'N/A';
             
             // Define o status atual no select (ignorando "Atrasada" como opção selecionável)
             let statusSelecionavel = tarefa.status;
             if (statusSelecionavel === 'Atrasada') {
-                 // Se estiver atrasada, o status "real" dela é Não Iniciada ou Em Andamento
-                 // Aqui, vamos assumir que ela volta para "Em Andamento" se não soubermos
-                 // (O ideal seria a planilha ter o status "real" e o "calculado")
-                 // Para simplificar, deixamos "Em Andamento"
-                 statusSelecionavel = 'Em Andamento'; 
+                 // Se estiver atrasada, o status "real" dela (Não iniciada ou Em Andamento)
+                 // precisa ser encontrado. Vamos procurar no log.
+                 const log = tarefa.observacoes_log || "";
+                 if (log.includes("Status alterado para \"Em Andamento\"")) {
+                    statusSelecionavel = "Em Andamento";
+                 } else {
+                    statusSelecionavel = "Não iniciada";
+                 }
             }
             document.getElementById('modal-status-select').value = statusSelecionavel;
             
+            // Armazena valores originais para comparar antes de salvar
+            modal.dataset.originalStatus = statusSelecionavel;
+            modal.dataset.originalResponsavel = tarefa.responsavel || '';
+
+            // ID da Tarefa
             document.getElementById('modal-task-id').value = tarefa.id_tarefa;
             
+            // (Melhoria 2) Log de Observações
+            document.getElementById('modal-observacoes-log').value = tarefa.observacoes_log || 'Nenhum histórico de alterações.';
+            
+            // Limpa o campo de novo comentário
+            document.getElementById('modal-new-comment').value = '';
+
+            // Última atualização (rodapé)
             let atualizacao = "Nenhuma atualização registrada.";
             if (tarefa.atualizado_por && tarefa.data_atualizacao) {
                 atualizacao = `${tarefa.atualizado_por} em ${new Date(tarefa.data_atualizacao).toLocaleString('pt-BR')}`;
@@ -409,21 +456,42 @@
         }
         
         /**
-         * Salva a atualização (POST)
+         * Salva a atualização (POST) - (ATUALIZADA)
          */
         async function salvarAtualizacaoTarefa() {
             if (!validarDadosUsuario()) return;
 
+            // Pega os dados do modal
             const idTarefa = document.getElementById('modal-task-id').value;
-            const novoStatus = document.getElementById('modal-status-select').value;
             const nomeUsuario = userNameInput.value;
             const nomeRegional = userRegionalInput.value;
+            
+            const novoStatus = document.getElementById('modal-status-select').value;
+            const novoResponsavel = document.getElementById('modal-responsavel-input').value;
+            const observacao = document.getElementById('modal-new-comment').value;
 
+            // Pega os dados originais
+            const originalStatus = modal.dataset.originalStatus;
+            const originalResponsavel = modal.dataset.originalResponsavel;
+
+            // Verifica se algo realmente mudou
+            const mudouStatus = novoStatus !== originalStatus;
+            const mudouResponsavel = novoResponsavel !== originalResponsavel;
+            const temComentario = observacao.trim() !== '';
+
+            if (!mudouStatus && !mudouResponsavel && !temComentario) {
+                alert("Nenhuma alteração foi feita.");
+                return;
+            }
+
+            // Monta o payload SÓ com o que mudou
             const payload = {
                 id_tarefa: idTarefa,
-                novo_status: novoStatus,
                 nome_usuario: nomeUsuario,
-                nome_regional: nomeRegional
+                nome_regional: nomeRegional,
+                novo_status: novoStatus, // Envia o status (o backend vai comparar)
+                novo_responsavel: novoResponsavel, // Envia o responsável (backend compara)
+                observacao: observacao // Envia a observação (backend verifica)
             };
 
             showLoading('Salvando atualização na planilha...');
@@ -434,7 +502,7 @@
                     redirect: 'follow',
                     body: JSON.stringify(payload),
                     headers: {
-                        'Content-Type': 'text/plain;charset=utf-8', // Apps Script web apps preferem text/plain para JSON
+                        'Content-Type': 'text/plain;charset=utf-8', 
                     },
                 });
 
