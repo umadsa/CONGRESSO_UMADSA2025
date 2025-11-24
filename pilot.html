@@ -179,7 +179,7 @@
                         <div id="kpi-total-pedidos" class="kpi-value text-blue-600">0</div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-title">Meta Total (Homens)</div>
+                        <div class="kpi-title">TOTAL DE(HOMENS ESPERADO)</div>
                         <div id="kpi-meta-total" class="kpi-value text-gray-800">0</div>
                     </div>
                     <div class="kpi-card">
@@ -421,7 +421,7 @@
 
         function renderizarKpisCamisetas(dados) {
             const dadosFiltrados = dados.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL');
-            const META_MINISTERIO = 2500;
+            const META_MINISTERIO = 2000;
 
             const totalPedidos = dadosFiltrados.reduce((acc, d) => acc + d.pagos, 0);
             const adesao = META_MINISTERIO > 0 ? (totalPedidos / META_MINISTERIO) * 100 : 0;
