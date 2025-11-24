@@ -169,7 +169,7 @@
                     </div>
                     <!-- Meta Total -->
                     <div class="kpi-card">
-                        <div class="kpi-title">Meta Total (Homens)</div>
+                        <div class="kpi-title">TOTAL DE (HOMENS ESPERADO)</div>
                         <div id="kpi-meta-total" class="kpi-value text-gray-800">0</div>
                     </div>
                     <!-- % Adesão Total -->
@@ -369,8 +369,8 @@
             // AJUSTE: Filtrar a regional "TOTAL" dos cálculos de KPI
             const dadosFiltrados = dados.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL');
 
-            // AJUSTE: Usar a meta fixa de 2500
-            const META_MINISTERIO = 2500;
+            // AJUSTE: Usar a meta fixa de 2000
+            const META_MINISTERIO = 2000;
 
             const totalPedidos = dadosFiltrados.reduce((acc, d) => acc + d.pagos, 0);
             // const totalMeta = dadosFiltrados.reduce((acc, d) => acc + d.meta, 0); // Não usa mais a meta da planilha
