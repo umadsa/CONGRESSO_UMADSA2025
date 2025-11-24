@@ -297,7 +297,7 @@
             const dados = allData.financeiro;
             
             // 1. Define os cabeçalhos
-            const cabecalhos = ["Data", "Tipo", "Categoria", "Descrição", "Valor Previsto", "Valor Pago", "Status"];
+            const cabecalhos = ["Data", "Tipo", "Categoria", "Descricao", "Valor Previsto", "Valor Pago", "Status"];
             
             // 2. Processa as linhas
             const linhas = dados.map(item => {
@@ -344,7 +344,7 @@
 
         function renderizarKpisFinanceiros(dados) {
             const entradas = dados.filter(d => d.tipo.toLowerCase() === 'entrada');
-            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saída');
+            const saidas = dados.filter(d => d.tipo.toLowerCase() === 'saida');
 
             const totalRecebidoPago = entradas.reduce((acc, d) => acc + d.pago, 0);
             const totalRecebidoPrevisto = entradas.reduce((acc, d) => acc + d.previsto, 0);
