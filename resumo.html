@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Resumo - Congresso UMADSA</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js (para gráficos) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Fontes Inter */
@@ -66,10 +64,8 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- Container Principal -->
     <div class="max-w-7xl mx-auto">
         
-        <!-- Cabeçalho -->
         <header class="mb-6 flex justify-between items-center">
              <div>
                 <h1 class="text-3xl font-bold text-gray-900">Dashboard Resumido</h1>
@@ -77,56 +73,50 @@
                 <p class="text-sm text-gray-500 mt-2">Última atualização: <span id="last-updated">--</span></p>
             </div>
             <div>
-                <!-- Logo da UMADSA (CORRIGIDO) -->
                 <img src="https://i.imgur.com/kOk8AsK.png" alt="Logo UMADSA" class="h-16">
             </div>
         </header>
 
-        <!-- Seção de Alerta: Cole a URL -->
         <div id="url-alert" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
             <p class="font-bold">Ação Necessária</p>
             <p>Cole a URL do seu Google Apps Script na variável `APPS_SCRIPT_URL` no código HTML.</p>
         </div>
 
-        <!-- Seção de Carregamento/Erro -->
         <div id="loading" class="loading-state">Carregando dados da planilha...</div>
         <div id="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 hidden" role="alert">
             <p class="font-bold">Erro ao Carregar Dados</p>
             <p id="error-message"></p>
         </div>
 
-        <!-- Conteúdo do Dashboard (escondido até carregar) -->
         <main id="dashboard-content" class="hidden">
             
-            <!-- SEÇÃO FINANCEIRA (Resumida) -->
             <section id="financeiro">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resumo Financeiro</h2>
                 
-                <!-- KPIs Financeiros (Novos) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <!-- Total Entrada Ajudas -->
+                    
                     <div class="kpi-card">
-                        <div class="kpi-title">Total Entradas (Ajudas)</div>
-                        <div id="kpi-entrada-ajudas" class="kpi-value text-green-600">R$ 0,00</div>
+                        <div class="kpi-title">Total de Entrada</div>
+                        <div id="kpi-total-entrada" class="kpi-value text-green-600">R$ 0,00</div>
                     </div>
-                    <!-- Total Entrada Camisetas -->
+                    
                     <div class="kpi-card">
-                        <div class="kpi-title">Total Entradas (Camisetas)</div>
-                        <div id="kpi-entrada-camisetas" class="kpi-value text-green-700">R$ 0,00</div>
+                        <div class="kpi-title">Total Saída</div>
+                        <div id="kpi-total-saida" class="kpi-value text-red-600">R$ 0,00</div>
                     </div>
-                    <!-- Total de Gastos -->
+                    
                     <div class="kpi-card">
-                        <div class="kpi-title">Total de Gastos</div>
-                        <div id="kpi-total-gastos" class="kpi-value text-red-600">R$ 0,00</div>
+                        <div class="kpi-title">Saldo Caixa</div>
+                        <div id="kpi-saldo-caixa" class="kpi-value text-blue-600">R$ 0,00</div>
                     </div>
-                    <!-- Total a Pagar (Gastos) -->
+                    
                     <div class="kpi-card">
-                        <div class="kpi-title">Total a Pagar (Gastos)</div>
-                        <div id="kpi-total-apagar" class="kpi-value text-yellow-600">R$ 0,00</div>
+                        <div class="kpi-title">A Pagar</div>
+                        <div id="kpi-a-pagar" class="kpi-value text-yellow-600">R$ 0,00</div>
                     </div>
+
                 </div>
 
-                <!-- Gráfico de Colunas (Entrada x Saída) -->
                 <div class="kpi-card">
                     <h3 class="text-lg font-semibold mb-4">Balanço: Entradas vs Saídas</h3>
                     <div class="w-full h-80 flex justify-center items-center">
@@ -135,18 +125,15 @@
                 </div>
             </section>
 
-            <!-- SEÇÃO CAMISETAS (Mantida) -->
             <section id="camisetas" class="mt-8">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Status das Camisetas</h2>
                 
-                <!-- KPIs Camisetas -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="kpi-card">
                         <div class="kpi-title">Total de Pedidos (Pagos)</div>
                         <div id="kpi-total-pedidos" class="kpi-value text-blue-600">0</div>
                     </div>
                     <div class="kpi-card">
-                        <!-- Título já estava correto no seu HTML -->
                         <div class="kpi-title">Total de (Homens Esperado)</div> 
                         <div id="kpi-meta-total" class="kpi-value text-gray-800">0</div>
                     </div>
@@ -156,13 +143,10 @@
                     </div>
                 </div>
 
-                <!-- Filtros de Regional -->
                 <div class="mb-4">
                     <label class="text-sm font-medium text-gray-700 mr-2">Filtrar por Regional:</label>
                     <div id="filtros-regionais" class="flex flex-wrap gap-2">
-                        <!-- Botões serão inseridos aqui pelo JS -->
-                    </div>
-                    <!-- NOVO BOTÃO PARA O GRÁFICO TOTAL -->
+                        </div>
                     <div class="mt-2 border-t pt-2 border-gray-200">
                         <button id="btn-filtro-total" class="filter-btn" onclick="handleTotalGraficoClick()">
                             Ver Gráfico Total (Ministério)
@@ -170,7 +154,6 @@
                     </div>
                 </div>
                 
-                <!-- Gráfico Camisetas -->
                 <div class="kpi-card">
                     <h3 class="text-lg font-semibold mb-4">Adesão por Campo</h3>
                     <div class="w-full h-96">
@@ -187,7 +170,6 @@
         // PASSO FINAL: COLE A URL DO SEU APPS SCRIPT AQUI
         // =================================================================
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwP2w1pVgbokfRtZAypbg8UZXBAo1b1IP8d1R50cJM1wRWlSe8WYG293sedKtv7FbGx/exec';
-        // Ex: 'https://script.google.com/macros/s/SUA_ID_UNICA/exec'
         // =================================================================
 
         // Referências de Gráficos
@@ -226,7 +208,6 @@
                 const data = await response.json();
                 
                 if (data.status === 'error') {
-                    // Mensagem de erro ajustada para o script v1
                     throw new Error(`Erro no Apps Script: ${data.message} (Verifique os nomes das abas: 'Lancamentos', 'Camisetas')`);
                 }
                 
@@ -235,8 +216,7 @@
                 // Renderiza o Resumo Financeiro
                 renderizarResumoFinanceiro(data.financeiro);
                 
-                // Renderiza a Seção de Camisetas (CORRIGIDO para data.camisetas)
-                // O script v1 retorna 'camisetas', não 'campos'
+                // Renderiza a Seção de Camisetas
                 renderizarKpisCamisetas(data.camisetas);
                 renderizarFiltrosCamisetas(data.camisetas);
                 renderizarGraficoCamisetas(data.camisetas);
@@ -254,40 +234,53 @@
             }
         }
 
-        // --- Funções de Renderização Financeira (Resumida) ---
+        // --- Funções de Renderização Financeira (ATUALIZADA) ---
 
         function formatarBRL(valor) {
             return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function renderizarResumoFinanceiro(financeiro) {
-            // 1. Calcular KPIs
+            // Filtrar entradas e saídas
             const entradas = financeiro.filter(d => d.tipo.toLowerCase() === 'entrada');
             const saidas = financeiro.filter(d => d.tipo.toLowerCase() === 'saída');
 
-            // KPIs específicos (Mantendo a correção da v1)
-            // Usando .includes() para ser mais flexível (ex: "Ajuda Regional" ou "Ajuda")
-            const totalEntradaAjudas = entradas
-                .filter(d => d.categoria.toLowerCase().includes('ajuda'))
-                .reduce((acc, d) => acc + d.pago, 0);
-            
-            const totalEntradaCamisetas = entradas
-                .filter(d => d.categoria.toLowerCase().includes('camiseta'))
-                .reduce((acc, d) => acc + d.pago, 0);
-            
-            const totalGastoPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
-            const totalGastoPago = saidas.reduce((acc, d) => acc + d.pago, 0);
-            const totalAPagar = totalGastoPrevisto - totalGastoPago;
+            // --- CÁLCULOS DOS NOVOS KPIs ---
 
-            // 2. Preencher KPIs
-            document.getElementById('kpi-entrada-ajudas').textContent = formatarBRL(totalEntradaAjudas);
-            document.getElementById('kpi-entrada-camisetas').textContent = formatarBRL(totalEntradaCamisetas);
-            document.getElementById('kpi-total-gastos').textContent = formatarBRL(totalGastoPrevisto);
-            document.getElementById('kpi-total-apagar').textContent = formatarBRL(totalAPagar);
+            // 1. Total Entrada (Soma de tudo o que foi PAGO/RECEBIDO em Entradas)
+            const totalEntradaRealizado = entradas.reduce((acc, d) => acc + d.pago, 0);
+
+            // 2. Total Saída (Soma de tudo o que foi PAGO em Saídas)
+            const totalSaidaRealizado = saidas.reduce((acc, d) => acc + d.pago, 0);
+
+            // 3. Saldo Caixa (Total Entrada - Total Saída)
+            const saldoCaixa = totalEntradaRealizado - totalSaidaRealizado;
+
+            // 4. A Pagar (O que foi PREVISTO em saídas - O que já foi PAGO)
+            // Lógica: Se previ gastar 1000 e gastei 200, falta pagar 800.
+            const totalSaidaPrevisto = saidas.reduce((acc, d) => acc + d.previsto, 0);
+            const aPagar = totalSaidaPrevisto - totalSaidaRealizado;
+
+            // --- PREENCHER A TELA ---
             
-            // 3. Renderizar Gráfico de Colunas (Balanço)
+            document.getElementById('kpi-total-entrada').textContent = formatarBRL(totalEntradaRealizado);
+            document.getElementById('kpi-total-saida').textContent = formatarBRL(totalSaidaRealizado);
+            
+            // Saldo com cor condicional (Azul se positivo, Vermelho se negativo)
+            const elSaldo = document.getElementById('kpi-saldo-caixa');
+            elSaldo.textContent = formatarBRL(saldoCaixa);
+            if (saldoCaixa < 0) {
+                elSaldo.classList.remove('text-blue-600');
+                elSaldo.classList.add('text-red-600');
+            } else {
+                elSaldo.classList.remove('text-red-600');
+                elSaldo.classList.add('text-blue-600');
+            }
+
+            document.getElementById('kpi-a-pagar').textContent = formatarBRL(aPagar);
+            
+            // --- GRÁFICO DE BALANÇO (Mantido mas atualizado com os totais) ---
             const totalEntradaPrevisto = entradas.reduce((acc, d) => acc + d.previsto, 0);
-            const totalEntradaPago = entradas.reduce((acc, d) => acc + d.pago, 0);
 
             const ctxBalanco = document.getElementById('resumoBalancoChart').getContext('2d');
             if (resumoBalancoChartInstance) resumoBalancoChartInstance.destroy();
@@ -298,12 +291,12 @@
                     datasets: [
                         {
                             label: 'Valor Realizado (Pago)',
-                            data: [totalEntradaPago, totalGastoPago],
+                            data: [totalEntradaRealizado, totalSaidaRealizado],
                             backgroundColor: ['#22c55e', '#ef4444'], // Verde, Vermelho
                         },
                         {
                             label: 'Valor Previsto',
-                            data: [totalEntradaPrevisto, totalGastoPrevisto],
+                            data: [totalEntradaPrevisto, totalSaidaPrevisto],
                             backgroundColor: ['#bbf7d0', '#fecaca'], // Verde claro, Vermelho claro
                         }
                     ]
@@ -313,55 +306,37 @@
                     maintainAspectRatio: false, 
                     scales: { 
                         y: { beginAtZero: true },
-                        x: { stacked: false } // Garante que as barras fiquem lado a lado
+                        x: { stacked: false }
                     } 
                 }
             });
         }
 
-        // --- Funções de Renderização Camisetas (AJUSTADA) ---
+        // --- Funções de Renderização Camisetas ---
         
-        // (O nome da variável 'campos' aqui é só o nome do argumento)
         function renderizarKpisCamisetas(campos) {
+            const META_MINISTERIO = 2000; 
             
-            // ==========================================================
-            // AJUSTE SOLICITADO (MÉTRICA FIXA)
-            // ==========================================================
-            
-            // 1. A Meta do Ministério é um valor fixo de 2500.
-            const META_MINISTERIO = 2500; 
-            
-            // 2. O Total de Pedidos é a soma da coluna 'Pedidos Pagos' (d.pagos)
-            // AJUSTE: Filtrar qualquer linha onde a regional seja 'TOTAL'
             const totalPedidos = campos
                 .filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL')
                 .reduce((acc, d) => acc + d.pagos, 0);
 
-            // 3. A % Adesão é calculada com base na nova meta fixa.
             const adesao = META_MINISTERIO > 0 ? (totalPedidos / META_MINISTERIO) * 100 : 0;
 
-            // 4. Preencher os KPIs
             document.getElementById('kpi-total-pedidos').textContent = totalPedidos;
-            document.getElementById('kpi-meta-total').textContent = META_MINISTERIO; // <-- Mostra o valor fixo 2500
+            document.getElementById('kpi-meta-total').textContent = META_MINISTERIO;
             document.getElementById('kpi-adesao-total').textContent = `${adesao.toFixed(0)}%`;
-            
-            // ==========================================================
-            // FIM DO AJUSTE
-            // ==========================================================
         }
         
-        // (O nome da variável 'campos' aqui é só o nome do argumento)
         function renderizarFiltrosCamisetas(campos) {
             const container = document.getElementById('filtros-regionais');
-            container.innerHTML = ''; // Limpa filtros existentes
+            container.innerHTML = ''; 
 
-            // AJUSTE: Filtrar 'TOTAL' da lista de botões de regionais
             const regionais = [...new Set(
                 campos.map(d => d.regional)
-                      .filter(r => r && r.toUpperCase() !== 'TOTAL') // <-- Filtra regionais "TOTAL"
+                      .filter(r => r && r.toUpperCase() !== 'TOTAL')
             )];
             
-            // Botão "TODAS"
             const btnTodas = document.createElement('button');
             btnTodas.className = 'filter-btn active';
             btnTodas.textContent = 'TODAS';
@@ -369,7 +344,6 @@
             btnTodas.onclick = () => handleFiltroRegional('TODAS');
             container.appendChild(btnTodas);
 
-            // Botões por regional
             regionais.forEach(regional => {
                 if (!regional) return;
                 const btn = document.createElement('button');
@@ -384,54 +358,37 @@
         function handleFiltroRegional(regional) {
             activeRegionalFilter = regional;
             
-            // Atualiza classe 'active' nos botões
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.regional === regional);
             });
 
-            // AJUSTE: Desativa o botão "Total" se um filtro regional for clicado
             document.getElementById('btn-filtro-total').classList.remove('active');
             
-            // Filtra os dados (allData.camisetas) e re-renderiza o gráfico
-            // CORRIGIDO de allData.campos para allData.camisetas
-            
-            // AJUSTE: Garantir que "TOTAL" nunca apareça no gráfico
             const dadosFiltrados = (regional === 'TODAS')
-                ? allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL') // Usa 'camisetas' do v1 E filtra "TOTAL"
-                : allData.camisetas.filter(d => d.regional === regional); // Filtro específico (não será "TOTAL" graças ao filtro anterior)
+                ? allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() !== 'TOTAL')
+                : allData.camisetas.filter(d => d.regional === regional);
                 
             renderizarGraficoCamisetas(dadosFiltrados);
         }
 
-        // NOVA FUNÇÃO para lidar com o clique no botão "Total"
         function handleTotalGraficoClick() {
-            // 1. Desativa todos os filtros de regionais
             document.querySelectorAll('#filtros-regionais .filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // 2. Ativa o botão "Total"
             document.getElementById('btn-filtro-total').classList.add('active');
-            
-            // 3. Atualiza o filtro ativo (apenas para referência)
             activeRegionalFilter = 'TOTAL_GRAFICO'; 
             
-            // 4. Busca SOmENTE a linha "TOTAL"
             const dadosFiltrados = allData.camisetas.filter(d => d.regional && d.regional.toUpperCase() === 'TOTAL');
-            
-            // 5. Renderiza o gráfico SÓ com essa linha
             renderizarGraficoCamisetas(dadosFiltrados);
         }
 
-        // Esta função (o gráfico) não muda.
-        // Ela continuará usando as metas (d.meta) de cada campo 
-        // vindas da planilha, que é o comportamento correto.
         function renderizarGraficoCamisetas(dados) {
             const ctxCamisetas = document.getElementById('camisetasChart').getContext('2d');
             
             const labels = dados.map(d => d.campo || 'Não especificado');
             const dataPagos = dados.map(d => d.pagos);
-            const dataMeta = dados.map(d => d.meta); // <- Certo, usa a meta da planilha para o gráfico
+            const dataMeta = dados.map(d => d.meta);
 
             if (camisetasChartInstance) camisetasChartInstance.destroy();
             camisetasChartInstance = new Chart(ctxCamisetas, {
@@ -442,13 +399,12 @@
                         {
                             label: 'Pedidos Pagos',
                             data: dataPagos,
-                            backgroundColor: '#3b82f6', // azul
+                            backgroundColor: '#3b82f6', 
                         },
                         {
-                            // AJUSTE: Corrigindo o label conforme seu HTML anterior
                             label: 'Total (Homens) Esperado', 
                             data: dataMeta,
-                            backgroundColor: '#ab7a37', // cinza claro
+                            backgroundColor: '#ab7a37', 
                         }
                     ]
                 },
@@ -463,11 +419,8 @@
             });
         }
 
-        // Inicia o carregamento quando a página é aberta
+        // Inicia o carregamento
         document.addEventListener('DOMContentLoaded', carregarDashboard);
     </script>
 </body>
 </html>
-
-
-
